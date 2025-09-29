@@ -738,6 +738,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }).join('');
             }
             DOM.searchResults.innerHTML = html;
+            // Patch: Sync search results to mobile searchResults if present
+            const mobileResults = document.querySelector('#mobileHeader #searchResults');
+            if (mobileResults) mobileResults.innerHTML = html;
 
             // 4. Click handlers
             document.querySelectorAll('#searchResults li').forEach(item => {
