@@ -4,10 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LostSoles - Traveler Sourced Awesomeness</title>
-    
+<!-- Firestore -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<!-- Storage -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script>
+  // Your Firebase config from the console
+  const firebaseConfig = {
+    apiKey: "AIzaSyAi0x7qTclT_JbSvTSgFWIIeYCKR28ZRFQ",
+    authDomain: "lostsoles.firebaseapp.com",
+    projectId: "lostsoles",
+    storageBucket: "lostsoles.firebasestorage.app",
+    messagingSenderId: "54345832025",
+    appId: "1:54345832025:web:dbb0f85c868e9f71d44348"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+</script>
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
      crossorigin=""/>
+
 
     <style>
         :root {
@@ -501,7 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     openModal(DOM.modalAdd);
                 });
             }
-            loadPinsFromStorage();
+            loadPinsFromFirestore();
             initMap();
             populateStaticElements();
             initEventListeners();
@@ -602,13 +621,19 @@ document.addEventListener('DOMContentLoaded', () => {
             DOM.adminModeToggle.addEventListener('change', toggleAdminMode);
         }
 
-        function loadPinsFromStorage() {
-            const storedPins = localStorage.getItem('lostSolesPins');
-            allPins = storedPins ? JSON.parse(storedPins) : [];
-        }
+        function loadPinsFromFirestore() {
+    db.collection('pins').get().then((querySnapshot) => {
+        allPins = [];
+        querySnapshot.forEach((doc) => {
+            let pin = doc.data();
+            pin.id = doc.id;
+            allPins.push(pin);
+        });
+        renderPins();
+    });
 
-        function savePinsToStorage() {
-            localStorage.setItem('lostSolesPins', JSON.stringify(allPins));
+
+        
         }
 
         function renderPins() {
@@ -664,40 +689,49 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         function handleAddPin(e) {
-            e.preventDefault();
-            const formData = new FormData(DOM.addPlaceForm);
-            const fileInput = document.getElementById('placeImage');
-            const file = fileInput && fileInput.files && fileInput.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(ev) {
-                    savePinWithImage(ev.target.result);
-                };
-                reader.readAsDataURL(file);
-            } else {
-                savePinWithImage(null);
-            }
-            function savePinWithImage(imageData) {
-                const newPin = {
-                    id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
-                    type: formData.get('type'),
-                    name: formData.get('name'),
-                    city: formData.get('city'),
-                    lat: parseFloat(formData.get('lat')),
-                    lng: parseFloat(formData.get('lng')),
-                    rating: parseInt(formData.get('rating'), 10),
-                    comment: formData.get('comment'),
-                    approved: false,
-                    ratings: [],
-                    comments: [],
-                    image: imageData
-                };
-                allPins.push(newPin);
-                savePinsToStorage();
-                alert('Place submitted for approval!');
-                closeModal(DOM.modalAdd);
-            }
-        }
+    e.preventDefault();
+    const formData = new FormData(DOM.addPlaceForm);
+    const fileInput = document.getElementById('placeImage');
+    const file = fileInput && fileInput.files && fileInput.files[0];
+
+    function savePin(imageUrl) {
+        const newPin = {
+            type: formData.get('type'),
+            name: formData.get('name'),
+            city: formData.get('city'),
+            lat: parseFloat(formData.get('lat')),
+            lng: parseFloat(formData.get('lng')),
+            rating: parseInt(formData.get('rating'), 10),
+            comment: formData.get('comment'),
+            approved: false,
+            ratings: [],
+            comments: [],
+            image: imageUrl || null
+        };
+        db.collection('pins').add(newPin)
+          .then(() => {
+            alert('Place submitted for approval!');
+            closeModal(DOM.modalAdd);
+            loadPinsFromFirestore();
+          })
+          .catch((error) => {
+            alert('Error saving pin: ' + error.message);
+          });
+    }
+
+    if (file) {
+        const storageRef = storage.ref().child('pin-images/' + Date.now() + '-' + file.name);
+        storageRef.put(file).then(snapshot => {
+            return snapshot.ref.getDownloadURL();
+        }).then(downloadURL => {
+            savePin(downloadURL);
+        }).catch(error => {
+            alert('Image upload failed: ' + error.message);
+            savePin(null);
+        });
+    } else {
+        savePin(null);
+    }
         
         function locateUser() {
             navigator.geolocation.getCurrentPosition(
@@ -850,32 +884,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 const rating = parseInt(reviewForm.reviewRating.value, 10);
                 const comment = reviewForm.reviewComment.value.trim();
                 if (!rating) return;
-                if (!pin.comments) pin.comments = [];
-                pin.comments.push({ rating, comment, timestamp: Date.now() });
-                savePinsToStorage();
-                closeModal(DOM.modalView);
+                // Add review to Firestore
+                db.collection('pins').doc(pin.id).get().then(doc => {
+                    if (!doc.exists) return;
+                    const pinData = doc.data();
+                    const comments = Array.isArray(pinData.comments) ? pinData.comments : [];
+                    comments.push({ rating, comment, timestamp: Date.now() });
+                    return db.collection('pins').doc(pin.id).update({ comments });
+                }).then(() => {
+                    loadPinsFromFirestore();
+                    closeModal(DOM.modalView);
+                });
             };
             openModal(DOM.modalView);
         }
         
         // NEW: Localized approval/rejection functions with Admin check
-        function approvePin(id) {
-            if (!isAdmin) return; // Basic security check
-            const pin = allPins.find(p => p.id === id);
-            if (pin) pin.approved = true;
-            savePinsToStorage();
-            renderPins();
-            // Re-render pending list to reflect the change immediately
-            openPendingModal(); 
-        }
+     function approvePin(id) {
+    if (!isAdmin) return;
+    const pin = allPins.find(p => p.id === id);
+    if (pin) {
+        db.collection('pins').doc(id).update({ approved: true }).then(() => {
+            loadPinsFromFirestore();
+            openPendingModal();
+        });
+    }
+}
         
-        function rejectPin(id) {
-            if (!isAdmin) return; // Basic security check
-            allPins = allPins.filter(p => p.id !== id);
-            savePinsToStorage();
-            // Re-render pending list to reflect the change immediately
-            openPendingModal(); 
-        }
+   function rejectPin(id) {
+    if (!isAdmin) return;
+    db.collection('pins').doc(id).delete().then(() => {
+        loadPinsFromFirestore();
+        openPendingModal();
+    });
+}
         
         function openPendingModal() {
             if (!isAdmin) return; // Prevent opening if not admin
@@ -921,16 +963,22 @@ document.addEventListener('DOMContentLoaded', () => {
         */
 
         function clearAllData() {
-            if (confirm('Are you sure you want to delete ALL data? This cannot be undone.')) {
-                localStorage.removeItem('lostSolesPins');
-                allPins = [];
-                renderPins();
-                alert('All data cleared.');
-            }
-        }
-
+    if (confirm('Are you sure you want to delete ALL data? This cannot be undone.')) {
+        db.collection('pins').get().then((querySnapshot) => {
+            const batch = db.batch();
+            querySnapshot.forEach((doc) => {
+                batch.delete(doc.ref);
+            });
+            return batch.commit();
+        }).then(() => {
+            allPins = [];
+            renderPins();
+            alert('All data cleared.');
+        });
         init();
-    });
-    </script>
+    }
+}
+});
+</script>
 </body>
 </html>
