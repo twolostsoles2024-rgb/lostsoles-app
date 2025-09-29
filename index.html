@@ -232,11 +232,12 @@
             }
             #sidePanel.active { transform: translateY(0); }
             .panel-toggle {
-                position: fixed; left: 50%; bottom: 60vh; transform: translate(-50%, 50%); z-index: 2500;
+                position: fixed; top: 12px; left: 12px; z-index: 2500;
                 background-color: var(--panel-bg); color: white; border: 2px solid var(--primary-color);
-                border-radius: 12px; width: 48px; height: 48px;
+                border-radius: 12px; width: 44px; height: 44px;
                 display: flex; justify-content: center; align-items: center;
                 font-size: 2rem; cursor: pointer;
+                box-shadow: 0 2px 8px rgba(10,35,66,0.12);
             }
             #map {
                 height: 40vh !important;
@@ -252,10 +253,11 @@
 
     <div id="loader">Initializing map — please wait...</div>
     <div class="panel-toggle" id="panelToggleBtn">☰</div>
+    <header id="mobileHeader" style="display:none;"></header>
 
     <aside id="sidePanel">
         <div class="panel-header">
-            <h1>LostSoles</h1>
+            <h1>LostSoles <span style="font-size:1.1rem;font-weight:normal;opacity:0.7;margin-left:6px;vertical-align:middle;">v1.6</span></h1>
             <p>Traveler Sourced Awesomeness</p>
         </div>
         <div class="search-container">
@@ -296,6 +298,11 @@
                     <label for="locationSearch">Search for a location</label>
                     <input type="text" id="locationSearch" placeholder="e.g., Eiffel Tower, Paris">
                     <div id="locationSearchResults"></div>
+                </div>
+                <div class="form-group">
+                    <label for="placeImage">Upload a picture (optional, 1 only)</label>
+                    <input type="file" id="placeImage" name="placeImage" accept="image/*">
+                    <img id="placeImagePreview" src="" alt="Preview" style="display:none;max-width:100%;margin-top:8px;border-radius:8px;" />
                 </div>
                 <div class="form-group">
                     <label for="type">Type</label>
@@ -388,6 +395,7 @@
     <script>
 document.addEventListener('DOMContentLoaded', () => {
 
+        // App version: 1.6
         const PIN_TYPES = {
             'cafe':      { label: 'Cafe / Coffee shop',    icon: '⦿', color: '#2196f3' },
             'coworking': { label: 'Co-working space',      icon: '▣', color: '#64b5f6' },
@@ -427,6 +435,37 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         
         function init() {
+                        // Mobile header setup
+                                    if (window.innerWidth <= 768) {
+                                            const version = 'v1.6';
+                                            const mobileHeader = document.getElementById('mobileHeader');
+                                            mobileHeader.style.display = 'flex';
+                                            mobileHeader.style.flexDirection = 'column';
+                                            mobileHeader.style.alignItems = 'stretch';
+                                            mobileHeader.style.background = 'linear-gradient(90deg,#0a2342 80%,#185b8c 100%)';
+                                            mobileHeader.style.color = '#fff';
+                                            mobileHeader.style.padding = '12px 10px 8px 10px';
+                                            mobileHeader.innerHTML = `
+                                                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                                                    <span style="font-size:1.3rem;font-weight:bold;letter-spacing:1px;">LostSoles <span style='font-size:0.95rem;font-weight:normal;opacity:0.7;margin-left:4px;'>${version}</span></span>
+                                                </div>
+                                                <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+                                                    <input type="text" id="mobileSearchInput" placeholder="Where are you going today?" style="flex:1;padding:8px 10px;border-radius:8px;border:none;font-size:1rem;background:#23395d;color:#fff;outline:none;">
+                                                    <button id="mobileLocationBtn" class="btn" style="width:38px;height:38px;min-width:38px;min-height:38px;padding:0;background:#185b8c;border:2px solid #2196f3;border-radius:8px;display:flex;align-items:center;justify-content:center;" title="Zoom to my location">
+                                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2196f3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8" stroke="#2196f3" stroke-width="2.2" fill="#fff"/><circle cx="12" cy="12" r="3" fill="#2196f3"/><line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" /></svg>
+                                                    </button>
+                                                </div>
+                                            `;
+                                            // Sync search and location events
+                                            document.getElementById('mobileSearchInput').addEventListener('input', e => {
+                                                DOM.searchInput.value = e.target.value;
+                                                DOM.searchInput.dispatchEvent(new Event('input'));
+                                            });
+                                            DOM.searchInput.addEventListener('input', e => {
+                                                document.getElementById('mobileSearchInput').value = e.target.value;
+                                            });
+                                            document.getElementById('mobileLocationBtn').addEventListener('click', locateUser);
+                                    }
             loadPinsFromStorage();
             initMap();
             populateStaticElements();
@@ -472,6 +511,13 @@ document.addEventListener('DOMContentLoaded', () => {
         function initEventListeners() {
             DOM.addPlaceBtn.addEventListener('click', () => {
                 DOM.addPlaceForm.reset();
+                const fileInput = document.getElementById('placeImage');
+                const previewImg = document.getElementById('placeImagePreview');
+                if (fileInput) fileInput.value = '';
+                if (previewImg) {
+                    previewImg.src = '';
+                    previewImg.style.display = 'none';
+                }
                 openModal(DOM.modalAdd);
             });
             DOM.myLocationBtn.addEventListener('click', locateUser);
@@ -485,6 +531,24 @@ document.addEventListener('DOMContentLoaded', () => {
             );
             DOM.cancelAddBtn.addEventListener('click', () => closeModal(DOM.modalAdd));
             
+            // Image preview logic
+            const fileInput = document.getElementById('placeImage');
+            const previewImg = document.getElementById('placeImagePreview');
+            if (fileInput && previewImg) {
+                fileInput.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            previewImg.src = e.target.result;
+                            previewImg.style.display = 'block';
+                        };
+                        reader.readAsDataURL(this.files[0]);
+                    } else {
+                        previewImg.src = '';
+                        previewImg.style.display = 'none';
+                    }
+                });
+            }
             DOM.addPlaceForm.addEventListener('submit', handleAddPin);
             
             DOM.searchInput.addEventListener('input', handleMainSearch);
@@ -548,25 +612,39 @@ document.addEventListener('DOMContentLoaded', () => {
         function handleAddPin(e) {
             e.preventDefault();
             const formData = new FormData(DOM.addPlaceForm);
-            const newPin = {
-                id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
-                type: formData.get('type'),
-                name: formData.get('name'),
-                city: formData.get('city'),
-                lat: parseFloat(formData.get('lat')),
-                lng: parseFloat(formData.get('lng')),
-                rating: parseInt(formData.get('rating'), 10), 
-                comment: formData.get('comment'),
-                approved: false,
-                ratings: [],
-                comments: []
-            };
-            
-            allPins.push(newPin);
-            savePinsToStorage();
-            
-            alert('Place submitted for approval!');
-            closeModal(DOM.modalAdd);
+            const fileInput = document.getElementById('placeImage');
+            const file = fileInput && fileInput.files && fileInput.files[0];
+
+            function savePin(imageUrl) {
+                const newPin = {
+                    id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
+                    type: formData.get('type'),
+                    name: formData.get('name'),
+                    city: formData.get('city'),
+                    lat: parseFloat(formData.get('lat')),
+                    lng: parseFloat(formData.get('lng')),
+                    rating: parseInt(formData.get('rating'), 10),
+                    comment: formData.get('comment'),
+                    approved: false,
+                    ratings: [],
+                    comments: [],
+                    image: imageUrl || null
+                };
+                allPins.push(newPin);
+                savePinsToStorage();
+                alert('Place submitted for approval!');
+                closeModal(DOM.modalAdd);
+            }
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    savePin(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                savePin(null);
+            }
         }
         
         function locateUser() {
@@ -696,6 +774,18 @@ document.addEventListener('DOMContentLoaded', () => {
             let allRatings = [pin.rating].concat((pin.comments||[]).map(r => r.rating).filter(r => typeof r === 'number'));
             let avg = allRatings.length ? (allRatings.reduce((a,b)=>a+b,0)/allRatings.length) : 0;
             document.getElementById('viewPinAvgRating').innerHTML = `<b>Average rating:</b> ${avg.toFixed(2)} / 5 <span style='color:#f39c12'>${'★'.repeat(Math.round(avg))}${'☆'.repeat(5-Math.round(avg))}</span> <small>(${allRatings.length} review${allRatings.length!==1?'s':''})</small>`;
+            // Show image if present
+            if (pin.image) {
+                if (!document.getElementById('viewPinImageContainer')) {
+                    const imgDiv = document.createElement('div');
+                    imgDiv.id = 'viewPinImageContainer';
+                    document.querySelector('#modalView .modal').insertBefore(imgDiv, document.getElementById('viewPinComment'));
+                }
+                let imgContainer = document.getElementById('viewPinImageContainer');
+                imgContainer.innerHTML = `<img src="${pin.image}" alt="Place image" style="max-width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);margin-bottom:8px;" />`;
+            } else if (document.getElementById('viewPinImageContainer')) {
+                document.getElementById('viewPinImageContainer').innerHTML = '';
+            }
             document.getElementById('viewPinComment').innerHTML = `<b>Original comment:</b><br>${pin.comment || 'No comment provided.'}`;
             // Show all reviews
             let reviewsHtml = '';
