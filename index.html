@@ -319,7 +319,7 @@
                 </div>
                 <div class="form-group">
                     <label for="placeImage">Upload a picture (optional, 1 only)</label>
-                    <input type="file" id="placeImage" name="placeImage" accept="image/*" capture="environment">
+                    <input type="file" id="placeImage" name="placeImage" accept="image/*">
                     <img id="placeImagePreview" src="" alt="Preview" style="display:none;max-width:100%;margin-top:8px;border-radius:8px;" />
                 </div>
                 <div class="form-group">
@@ -462,9 +462,10 @@ document.addEventListener('DOMContentLoaded', () => {
         function init() {
             // Set version number in desktop header
             document.getElementById('desktopVersion').textContent = 'v1.3';
+            document.getElementById('desktopVersion').textContent = 'v1.4';
             // Mobile header setup: banner with name, search, zoom, add new place
             if (window.innerWidth <= 768) {
-                const version = 'v1.3';
+                const version = 'v1.4';
                 const mobileHeader = document.getElementById('mobileHeader');
                 mobileHeader.style.display = 'flex';
                 mobileHeader.style.flexDirection = 'column';
@@ -473,7 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 mobileHeader.style.color = '#fff';
                 mobileHeader.style.padding = '12px 10px 8px 10px';
                 mobileHeader.innerHTML = `
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                    <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;">
                         <span style="font-size:1.3rem;font-weight:bold;letter-spacing:1px;">LostSoles <span style='font-size:0.95rem;font-weight:normal;opacity:0.7;margin-left:4px;'>${version}</span></span>
                     </div>
                     <div style="font-size:0.95rem;opacity:0.8;margin-top:2px;margin-bottom:2px;">Travelers Sharing Awesome Spots</div>
@@ -521,18 +522,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 `<option value="${key}">${PIN_TYPES[key].label}</option>`
             ).join('');
 
-            // Add checkbox filters to legend
-            DOM.legendItems.innerHTML = Object.keys(PIN_TYPES).map(key => {
-                const type = PIN_TYPES[key];
-                return `
-                    <div class="legend-item">
-                        <input type="checkbox" class="type-filter" id="filter-${key}" data-type="${key}" checked style="margin-right:7px;">
-                        <div class="pin-icon" style="background-color: ${type.color};">
-                            <div class="pin-icon-inner">${type.icon}</div>
-                        </div>
-                        <label for="filter-${key}" style="margin-left:6px;cursor:pointer;">${type.label}</label>
-                    </div>`;
-            }).join('');
+            // Add filter label and restyled checkbox filters to legend
+            DOM.legendItems.innerHTML = `
+                <div style="display:flex;align-items:center;font-weight:bold;font-size:1.08em;margin-bottom:10px;gap:7px;">
+                    <span style="font-size:1.2em;">&#128269;</span> Filter
+                </div>
+                ` +
+                Object.keys(PIN_TYPES).map(key => {
+                    const type = PIN_TYPES[key];
+                    return `
+                        <div class="legend-item" style="display:flex;align-items:center;margin-bottom:13px;gap:12px;">
+                            <input type="checkbox" class="type-filter" id="filter-${key}" data-type="${key}" checked style="margin-right:7px;transform:scale(1.25);">
+                            <div class="pin-icon" style="background-color: ${type.color};">
+                                <div class="pin-icon-inner">${type.icon}</div>
+                            </div>
+                            <label for="filter-${key}" style="margin-left:6px;cursor:pointer;font-size:1.04em;">${type.label}</label>
+                        </div>`;
+                }).join('');
         }
         
         function debounce(func, delay) {
