@@ -257,8 +257,8 @@
 
     <aside id="sidePanel">
         <div class="panel-header">
-            <h1>LostSoles <span style="font-size:1.1rem;font-weight:normal;opacity:0.7;margin-left:6px;vertical-align:middle;">v1.6</span></h1>
-            <p>Traveler Sourced Awesomeness</p>
+            <h1>LostSoles <span style="font-size:1.1rem;font-weight:normal;opacity:0.7;margin-left:6px;vertical-align:middle;">v1.7</span></h1>
+            <p>Finding and sharing awesome spots</p>
         </div>
         <div class="search-container">
             <div style="display:flex;gap:8px;align-items:center;">
@@ -268,20 +268,19 @@
                 </button>
             </div>
             <ul id="searchResults"></ul>
+            <button id="addPlaceBtn" class="btn btn-primary" style="width:100%;margin:14px 0 0 0;">📍 Add New Place</button>
         </div>
         <div class="legend">
             <h3>Legend</h3>
             <div id="legendItems"></div>
         </div>
-        
-        <div class="admin-mode-toggle">
+        <div style="flex:1;"></div>
+        <div class="actions">
+            <button id="pendingBtn" class="btn btn-admin" style="display: none;">⏳ Pending Pins</button>
+        </div>
+        <div class="admin-mode-toggle" style="margin-top:18px;">
             <label for="adminModeToggle">Admin Mode</label>
             <input type="checkbox" id="adminModeToggle">
-        </div>
-
-        <div class="actions">
-            <button id="addPlaceBtn" class="btn btn-primary">📍 Add New Place</button>
-            <button id="pendingBtn" class="btn btn-admin" style="display: none;">⏳ Pending Pins</button>
         </div>
     </aside>
 
@@ -402,7 +401,8 @@ document.addEventListener('DOMContentLoaded', () => {
             'market':    { label: 'Local Food / Market',   icon: '◼', color: '#b3e0fc' },
             'sunrise':   { label: 'Sunrise spot',          icon: '▴', color: '#42a5f5' },
             'sunset':    { label: 'Sunset spot',           icon: '▾', color: '#1565c0' },
-            'water':     { label: 'Free Water refill',     icon: '◯', color: '#00b4d8' }
+            'water':     { label: 'Free Water refill',     icon: '◯', color: '#00b4d8' },
+            'worldgoby': { label: 'Spots to watch the world go by', icon: '🌍', color: '#43a047' }
         };
 
         let map;
@@ -437,7 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
         function init() {
                         // Mobile header setup
                                     if (window.innerWidth <= 768) {
-                                            const version = 'v1.6';
+                                            const version = 'v1.7';
                                             const mobileHeader = document.getElementById('mobileHeader');
                                             mobileHeader.style.display = 'flex';
                                             mobileHeader.style.flexDirection = 'column';
@@ -446,14 +446,22 @@ document.addEventListener('DOMContentLoaded', () => {
                                             mobileHeader.style.color = '#fff';
                                             mobileHeader.style.padding = '12px 10px 8px 10px';
                                             mobileHeader.innerHTML = `
-                                                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-                                                    <span style="font-size:1.3rem;font-weight:bold;letter-spacing:1px;">LostSoles <span style='font-size:0.95rem;font-weight:normal;opacity:0.7;margin-left:4px;'>${version}</span></span>
+                                                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100vw;padding:10px 8px 4px 8px;background:linear-gradient(90deg,#0a2342 80%,#185b8c 100%);color:#fff;position:fixed;top:0;left:0;z-index:3000;">
+                                                    <span></span>
+                                                    <span style="font-size:1.3rem;font-weight:bold;letter-spacing:1px;text-align:right;flex:1;">LostSoles <span style='font-size:0.95rem;font-weight:normal;opacity:0.7;margin-left:4px;'>${version}</span></span>
                                                 </div>
-                                                <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+                                                <div style="display:flex;align-items:center;gap:8px;padding:8px 8px 0 8px;background:linear-gradient(90deg,#0a2342 80%,#185b8c 100%);color:#fff;position:fixed;top:48px;left:0;width:100vw;z-index:3000;">
                                                     <input type="text" id="mobileSearchInput" placeholder="Where are you going today?" style="flex:1;padding:8px 10px;border-radius:8px;border:none;font-size:1rem;background:#23395d;color:#fff;outline:none;">
                                                     <button id="mobileLocationBtn" class="btn" style="width:38px;height:38px;min-width:38px;min-height:38px;padding:0;background:#185b8c;border:2px solid #2196f3;border-radius:8px;display:flex;align-items:center;justify-content:center;" title="Zoom to my location">
                                                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2196f3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8" stroke="#2196f3" stroke-width="2.2" fill="#fff"/><circle cx="12" cy="12" r="3" fill="#2196f3"/><line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" /></svg>
                                                     </button>
+                                                    <button id="mobileAddPlaceBtn" class="btn btn-primary" style="height:38px;min-width:38px;min-height:38px;padding:0 12px 0 10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;gap:4px;" title="Add New Place">📍</button>
+                                                </div>
+                                                <div style="height:96px;"></div>
+                                                <div style="flex:1;"></div>
+                                                <div class="admin-mode-toggle" style="margin-top:18px;">
+                                                    <label for="adminModeToggle">Admin Mode</label>
+                                                    <input type="checkbox" id="adminModeToggle">
                                                 </div>
                                             `;
                                             // Sync search and location events
@@ -465,6 +473,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 document.getElementById('mobileSearchInput').value = e.target.value;
                                             });
                                             document.getElementById('mobileLocationBtn').addEventListener('click', locateUser);
+                                            document.getElementById('mobileAddPlaceBtn').addEventListener('click', () => {
+                                                DOM.addPlaceForm.reset();
+                                                const fileInput = document.getElementById('placeImage');
+                                                const previewImg = document.getElementById('placeImagePreview');
+                                                if (fileInput) fileInput.value = '';
+                                                if (previewImg) {
+                                                    previewImg.src = '';
+                                                    previewImg.style.display = 'none';
+                                                }
+                                                openModal(DOM.modalAdd);
+                                            });
                                     }
             loadPinsFromStorage();
             initMap();
@@ -484,20 +503,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         function populateStaticElements() {
+            // Populate type select
             DOM.typeSelect.innerHTML = Object.keys(PIN_TYPES).map(key => 
                 `<option value="${key}">${PIN_TYPES[key].label}</option>`
             ).join('');
-            
-            DOM.legendItems.innerHTML = Object.keys(PIN_TYPES).map(key => {
-                const type = PIN_TYPES[key];
-                return `
-                    <div class="legend-item">
-                        <div class="pin-icon" style="background-color: ${type.color};">
-                            <div class="pin-icon-inner">${type.icon}</div>
-                        </div>
-                        <span>${type.label}</span>
-                    </div>`;
-            }).join('');
+
+            // Add filter label and restyled checkbox filters to legend
+            DOM.legendItems.innerHTML = `
+                <div style="display:flex;align-items:center;font-weight:bold;font-size:1.08em;margin-bottom:10px;gap:7px;">
+                    <span style="font-size:1.2em;">&#128269;</span> Filter
+                </div>
+                ` +
+                Object.keys(PIN_TYPES).map(key => {
+                    const type = PIN_TYPES[key];
+                    return `
+                        <div class="legend-item" style="display:flex;align-items:center;margin-bottom:13px;gap:12px;">
+                            <input type="checkbox" class="type-filter" id="filter-${key}" data-type="${key}" checked style="margin-right:7px;transform:scale(1.25);">
+                            <div class="pin-icon" style="background-color: ${type.color};">
+                                <div class="pin-icon-inner">${type.icon}</div>
+                            </div>
+                            <label for="filter-${key}" style="margin-left:6px;cursor:pointer;font-size:1.04em;">${type.label}</label>
+                        </div>`;
+                }).join('');
         }
         
         function debounce(func, delay) {
@@ -569,8 +596,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function renderPins() {
             pinsLayer.clearLayers();
-            const approvedPins = allPins.filter(pin => pin.approved);
-            
+            // Get active filters
+            const activeTypes = Array.from(document.querySelectorAll('.type-filter:checked')).map(cb => cb.dataset.type);
+            const approvedPins = allPins.filter(pin => pin.approved && activeTypes.includes(pin.type));
+
             approvedPins.forEach(pin => {
                 const typeInfo = PIN_TYPES[pin.type];
                 if (!typeInfo) return;
@@ -585,6 +614,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const marker = L.marker([pin.lat, pin.lng], { icon: customIcon });
                 marker.on('click', () => openViewModal(pin));
                 pinsLayer.addLayer(marker);
+            });
+            // Listen for filter changes
+            document.getElementById('legendItems').addEventListener('change', function(e) {
+                if (e.target.classList.contains('type-filter')) {
+                    renderPins();
+                }
             });
         }
         
