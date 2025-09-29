@@ -437,38 +437,43 @@ document.addEventListener('DOMContentLoaded', () => {
         
         function init() {
             // Set version number in desktop header
-            document.getElementById('desktopVersion').textContent = 'v1.1';
-                        // Mobile header setup
-                                    if (window.innerWidth <= 768) {
-                                            const version = 'v1.1';
-                                            const mobileHeader = document.getElementById('mobileHeader');
-                                            mobileHeader.style.display = 'flex';
-                                            mobileHeader.style.flexDirection = 'column';
-                                            mobileHeader.style.alignItems = 'stretch';
-                                            mobileHeader.style.background = 'linear-gradient(90deg,#0a2342 80%,#185b8c 100%)';
-                                            mobileHeader.style.color = '#fff';
-                                            mobileHeader.style.padding = '12px 10px 8px 10px';
-                                            mobileHeader.innerHTML = `
-                                                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-                                                    <span style="font-size:1.3rem;font-weight:bold;letter-spacing:1px;">LostSoles <span style='font-size:0.95rem;font-weight:normal;opacity:0.7;margin-left:4px;'>${version}</span></span>
-                                                </div>
-                                                <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
-                                                    <input type="text" id="mobileSearchInput" placeholder="Where are you going today?" style="flex:1;padding:8px 10px;border-radius:8px;border:none;font-size:1rem;background:#23395d;color:#fff;outline:none;">
-                                                    <button id="mobileLocationBtn" class="btn" style="width:38px;height:38px;min-width:38px;min-height:38px;padding:0;background:#185b8c;border:2px solid #2196f3;border-radius:8px;display:flex;align-items:center;justify-content:center;" title="Zoom to my location">
-                                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2196f3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8" stroke="#2196f3" stroke-width="2.2" fill="#fff"/><circle cx="12" cy="12" r="3" fill="#2196f3"/><line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" /></svg>
-                                                    </button>
-                                                </div>
-                                            `;
-                                            // Sync search and location events
-                                            document.getElementById('mobileSearchInput').addEventListener('input', e => {
-                                                DOM.searchInput.value = e.target.value;
-                                                DOM.searchInput.dispatchEvent(new Event('input'));
-                                            });
-                                            DOM.searchInput.addEventListener('input', e => {
-                                                document.getElementById('mobileSearchInput').value = e.target.value;
-                                            });
-                                            document.getElementById('mobileLocationBtn').addEventListener('click', locateUser);
-                                    }
+            document.getElementById('desktopVersion').textContent = 'v1.2';
+            // Mobile header setup: banner with name, search, zoom, add new place
+            if (window.innerWidth <= 768) {
+                const version = 'v1.2';
+                const mobileHeader = document.getElementById('mobileHeader');
+                mobileHeader.style.display = 'flex';
+                mobileHeader.style.flexDirection = 'column';
+                mobileHeader.style.alignItems = 'stretch';
+                mobileHeader.style.background = 'linear-gradient(90deg,#0a2342 80%,#185b8c 100%)';
+                mobileHeader.style.color = '#fff';
+                mobileHeader.style.padding = '12px 10px 8px 10px';
+                mobileHeader.innerHTML = `
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                        <span style="font-size:1.3rem;font-weight:bold;letter-spacing:1px;">LostSoles <span style='font-size:0.95rem;font-weight:normal;opacity:0.7;margin-left:4px;'>${version}</span></span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+                        <input type="text" id="mobileSearchInput" placeholder="Where are you going today?" style="flex:1;padding:8px 10px;border-radius:8px;border:none;font-size:1rem;background:#23395d;color:#fff;outline:none;">
+                        <button id="mobileLocationBtn" class="btn" style="width:38px;height:38px;min-width:38px;min-height:38px;padding:0;background:#185b8c;border:2px solid #2196f3;border-radius:8px;display:flex;align-items:center;justify-content:center;" title="Zoom to my location">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2196f3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8" stroke="#2196f3" stroke-width="2.2" fill="#fff"/><circle cx="12" cy="12" r="3" fill="#2196f3"/><line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" /></svg>
+                        </button>
+                        <button id="mobileAddPlaceBtn" class="btn btn-primary" style="height:38px;min-width:38px;min-height:38px;padding:0 12px 0 10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;gap:4px;" title="Add New Place">📍</button>
+                    </div>
+                `;
+                // Sync search and location events
+                document.getElementById('mobileSearchInput').addEventListener('input', e => {
+                    DOM.searchInput.value = e.target.value;
+                    DOM.searchInput.dispatchEvent(new Event('input'));
+                });
+                DOM.searchInput.addEventListener('input', e => {
+                    document.getElementById('mobileSearchInput').value = e.target.value;
+                });
+                document.getElementById('mobileLocationBtn').addEventListener('click', locateUser);
+                document.getElementById('mobileAddPlaceBtn').addEventListener('click', () => {
+                    DOM.addPlaceForm.reset();
+                    openModal(DOM.modalAdd);
+                });
+            }
             loadPinsFromStorage();
             initMap();
             populateStaticElements();
