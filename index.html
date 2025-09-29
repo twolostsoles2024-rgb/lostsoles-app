@@ -520,15 +520,17 @@ document.addEventListener('DOMContentLoaded', () => {
             DOM.typeSelect.innerHTML = Object.keys(PIN_TYPES).map(key => 
                 `<option value="${key}">${PIN_TYPES[key].label}</option>`
             ).join('');
-            
+
+            // Add checkbox filters to legend
             DOM.legendItems.innerHTML = Object.keys(PIN_TYPES).map(key => {
                 const type = PIN_TYPES[key];
                 return `
                     <div class="legend-item">
+                        <input type="checkbox" class="type-filter" id="filter-${key}" data-type="${key}" checked style="margin-right:7px;">
                         <div class="pin-icon" style="background-color: ${type.color};">
                             <div class="pin-icon-inner">${type.icon}</div>
                         </div>
-                        <span>${type.label}</span>
+                        <label for="filter-${key}" style="margin-left:6px;cursor:pointer;">${type.label}</label>
                     </div>`;
             }).join('');
         }
@@ -604,8 +606,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function renderPins() {
             pinsLayer.clearLayers();
-            const approvedPins = allPins.filter(pin => pin.approved);
-            
+            // Get active filters
+            const activeTypes = Array.from(document.querySelectorAll('.type-filter:checked')).map(cb => cb.dataset.type);
+            const approvedPins = allPins.filter(pin => pin.approved && activeTypes.includes(pin.type));
+
             approvedPins.forEach(pin => {
                 const typeInfo = PIN_TYPES[pin.type];
                 if (!typeInfo) return;
@@ -620,6 +624,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const marker = L.marker([pin.lat, pin.lng], { icon: customIcon });
                 marker.on('click', () => openViewModal(pin));
                 pinsLayer.addLayer(marker);
+            });
+            // Listen for filter changes
+            document.getElementById('legendItems').addEventListener('change', function(e) {
+                if (e.target.classList.contains('type-filter')) {
+                    renderPins();
+                }
             });
         }
         
