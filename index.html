@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LostSoles - Traveler Sourced Awesomeness</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+
+    <style>
+        :root {
+            --primary-color: #0077b6;
+            --secondary-color: #00b4d8;
+            --danger-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --panel-bg: rgba(44, 62, 80, 0.95);
+            --modal-bg: #ffffff;
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --star-color: #ccc;
+            --star-color-filled: #f39c12;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-family);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: var(--dark-color);
+        }
+
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--dark-color); color: var(--light-color);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.5rem; z-index: 9999; transition: opacity 0.5s ease;
+        }
+
+        #map { flex-grow: 1; height: 100%; z-index: 1; }
+
+        #sidePanel {
+            width: 350px;
+            background: linear-gradient(160deg, #0a2342 80%, #185b8c 100%);
+            color: var(--light-color);
+            padding: 20px; display: flex; flex-direction: column;
+            overflow-y: auto; z-index: 1000; transition: transform 0.3s ease-in-out;
+            box-shadow: 2px 0 16px rgba(10,35,66,0.25);
+        }
+        
+        /* NEW: Admin Mode Visual Cue */
+        #sidePanel.admin-mode {
+            border-right: 5px solid var(--danger-color); 
+        }
+
+        .panel-header {
+            text-align: center; margin-bottom: 20px;
+            border-bottom: 2px solid var(--primary-color); padding-bottom: 10px;
+        }
+        .panel-header h1 { font-size: 2.2rem; font-weight: bold; margin: 0; }
+        .panel-header p { font-size: 0.9rem; color: var(--secondary-color); font-style: italic; }
+
+        .search-container { margin-bottom: 20px; }
+        .search-container input {
+            width: 100%; padding: 10px; border: 1px solid var(--primary-color);
+            border-radius: 5px; background-color: #34495e;
+            color: var(--light-color); font-size: 1rem;
+        }
+
+        #searchResults { list-style: none; margin-top: 10px; }
+        #searchResults li { padding: 10px; cursor: pointer; border-radius: 5px; transition: background-color 0.2s; }
+        #searchResults li:hover { background-color: rgba(0, 119, 182, 0.3); }
+
+        .legend, .actions { margin-top: auto; }
+        .legend h3, .actions h3 { margin-bottom: 10px; }
+        .legend-item { display: flex; align-items: center; margin-bottom: 8px; }
+        .legend-item .pin-icon {
+            margin-right: 10px; flex-shrink: 0; border-radius: 8px; width: 28px; height: 28px;
+            box-shadow: none; border: 2px solid #e74c3c; background: #185b8c; display: flex; align-items: center; justify-content: center;
+        }
+        .legend-item .pin-icon-inner {
+            font-size: 1.2rem; color: #111; font-weight: bold;
+        }
+        
+        /* NEW: Admin Mode Toggle Styling */
+        .admin-mode-toggle {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-radius: 5px;
+        }
+        .admin-mode-toggle label {
+            flex-grow: 1;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .admin-mode-toggle input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+        }
+        /* End NEW: Admin Mode Toggle Styling */
+
+
+        .actions { display: flex; flex-direction: column; gap: 10px; padding-top: 20px; border-top: 1px solid #34495e; }
+        
+        .btn {
+            padding: 12px; border: none; border-radius: 5px;
+            cursor: pointer; font-size: 1rem; font-weight: bold; transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, #2196f3 60%, #64b5f6 100%);
+            color: #fff;
+            border: none;
+            box-shadow: 0 2px 8px rgba(33,150,243,0.08);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #1565c0 60%, #42a5f5 100%);
+        }
+        .btn-secondary {
+            background: linear-gradient(90deg, #64b5f6 60%, #b3e0fc 100%);
+            color: #0a2342;
+            border: none;
+            box-shadow: 0 2px 8px rgba(100,181,246,0.08);
+        }
+        .btn-secondary:hover {
+            background: linear-gradient(90deg, #42a5f5 60%, #b3e0fc 100%);
+        }
+        .btn-admin { background-color: #f39c12; color: white; }
+        .btn-admin:hover { background-color: #e67e22; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-danger:hover { background-color: #c0392b; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); z-index: 2000;
+            display: none; justify-content: center; align-items: center;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background-color: var(--modal-bg); padding: 25px; border-radius: 10px;
+            width: 90%; max-width: 500px; max-height: 90vh;
+            overflow-y: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px;
+        }
+        .modal-header h2 { color: var(--dark-color); }
+        .close-btn { cursor: pointer; font-size: 1.5rem; border: none; background: none; color: #777; }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px; border: 1px solid #ccc;
+            border-radius: 5px; font-size: 1rem;
+        }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-group input[readonly] { background-color: #f0f0f0; cursor: not-allowed; }
+        
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+        #locationSearchContainer { position: relative; }
+        #locationSearchResults {
+            position: absolute; width: 100%; background-color: white;
+            border: 1px solid #ddd; border-top: none; border-radius: 0 0 5px 5px;
+            z-index: 2001; max-height: 200px; overflow-y: auto;
+        }
+        #locationSearchResults div { padding: 10px; cursor: pointer; }
+        #locationSearchResults div:hover { background-color: var(--secondary-color); color: white; }
+
+        /* --- NEW Star Rating System --- */
+        .star-rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+            gap: 5px;
+        }
+        .star-rating input[type="radio"] { display: none; }
+        .star-rating label {
+            font-size: 2rem;
+            color: var(--star-color);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .star-rating input[type="radio"]:checked ~ label,
+        .star-rating:hover input[type="radio"] ~ label:hover,
+        .star-rating:hover input[type="radio"] ~ label:hover ~ label {
+            color: var(--star-color-filled);
+        }
+
+        /* --- View Modal Specifics --- */
+        #viewPinName { font-size: 1.5rem; color: var(--dark-color); }
+        #viewPinCity { font-size: 1rem; color: #777; margin-bottom: 15px; }
+        #viewPinRating { font-size: 1.5rem; margin-bottom: 10px; color: var(--star-color-filled); }
+        #viewPinComment { background-color: #f9f9f9; border-left: 3px solid var(--secondary-color); padding: 10px; border-radius: 3px; }
+
+        #pendingList { list-style: none; }
+        #pendingList li {
+            padding: 15px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .pending-actions { display: flex; gap: 5px; }
+        .btn-sm { padding: 5px 10px; font-size: 0.8rem; } /* Added styling for small buttons in pending list */
+
+        .pin-icon {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: #185b8c;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 2px 8px rgba(10,35,66,0.15);
+            border: 2px solid #e74c3c;
+        }
+        .pin-icon-inner {
+            color: #111;
+            font-size: 1.4rem;
+            font-weight: bold;
+            transform: none;
+        }
+        
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            #sidePanel {
+                position: fixed; left: 0; bottom: 0; width: 100vw; height: 60vh; max-height: 420px;
+                top: auto; transform: translateY(100%); box-shadow: 0 -2px 16px rgba(10,35,66,0.25);
+                border-radius: 18px 18px 0 0;
+                z-index: 2000;
+            }
+            #sidePanel.active { transform: translateY(0); }
+            .panel-toggle {
+                position: fixed; left: 50%; bottom: 60vh; transform: translate(-50%, 50%); z-index: 2500;
+                background-color: var(--panel-bg); color: white; border: 2px solid var(--primary-color);
+                border-radius: 12px; width: 48px; height: 48px;
+                display: flex; justify-content: center; align-items: center;
+                font-size: 2rem; cursor: pointer;
+            }
+            #map {
+                height: 40vh !important;
+            }
+            .modal {
+                width: 98vw; max-width: 98vw; max-height: 90vh;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader">Initializing map — please wait...</div>
+    <div class="panel-toggle" id="panelToggleBtn">☰</div>
+
+    <aside id="sidePanel">
+        <div class="panel-header">
+            <h1>LostSoles</h1>
+            <p>Traveler Sourced Awesomeness</p>
+        </div>
+        <div class="search-container">
+            <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" id="searchInput" placeholder="Where are you going today?" style="flex:1;">
+                <button id="myLocationBtn" class="btn" style="width:38px;height:38px;min-width:38px;min-height:38px;padding:0;background:#185b8c;border:2px solid #2196f3;border-radius:8px;display:flex;align-items:center;justify-content:center;" title="Zoom to my location">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2196f3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8" stroke="#2196f3" stroke-width="2.2" fill="#fff"/><circle cx="12" cy="12" r="3" fill="#2196f3"/><line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" /></svg>
+                </button>
+            </div>
+            <ul id="searchResults"></ul>
+        </div>
+        <div class="legend">
+            <h3>Legend</h3>
+            <div id="legendItems"></div>
+        </div>
+        
+        <div class="admin-mode-toggle">
+            <label for="adminModeToggle">Admin Mode</label>
+            <input type="checkbox" id="adminModeToggle">
+        </div>
+
+        <div class="actions">
+            <button id="addPlaceBtn" class="btn btn-primary">📍 Add New Place</button>
+            <button id="pendingBtn" class="btn btn-admin" style="display: none;">⏳ Pending Pins</button>
+        </div>
+    </aside>
+
+    <main id="map"></main>
+
+    <div id="modalAdd" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Add a New Place</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="addPlaceForm">
+                <div class="form-group" id="locationSearchContainer">
+                    <label for="locationSearch">Search for a location</label>
+                    <input type="text" id="locationSearch" placeholder="e.g., Eiffel Tower, Paris">
+                    <div id="locationSearchResults"></div>
+                </div>
+                <div class="form-group">
+                    <label for="type">Type</label>
+                    <select id="type" name="type" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="name">Name / Place</label>
+                    <input type="text" id="name" name="name" required readonly>
+                </div>
+                <div class="form-group">
+                    <label for="city">City</label>
+                    <input type="text" id="city" name="city" required readonly>
+                </div>
+                <div class="form-group">
+                    <label for="lat">Latitude</label>
+                    <input type="text" id="lat" name="lat" readonly required>
+                </div>
+                <div class="form-group">
+                    <label for="lng">Longitude</label>
+                    <input type="text" id="lng" name="lng" readonly required>
+                </div>
+                <div class="form-group">
+                    <label>Your Rating (Required)</label>
+                    <div class="star-rating">
+                        <input type="radio" id="star5" name="rating" value="5" required><label for="star5" title="5 stars">★</label>
+                        <input type="radio" id="star4" name="rating" value="4"><label for="star4" title="4 stars">★</label>
+                        <input type="radio" id="star3" name="rating" value="3"><label for="star3" title="3 stars">★</label>
+                        <input type="radio" id="star2" name="rating" value="2"><label for="star2" title="2 stars">★</label>
+                        <input type="radio" id="star1" name="rating" value="1"><label for="star1" title="1 star">★</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="comment">Comments</label>
+                    <textarea id="comment" name="comment" placeholder="Describe the place... what makes it awesome? (e.g., 'Fast wifi, great coffee, lots of power outlets.')"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-danger" id="cancelAddBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit for Approval</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="modalView" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="viewPinName"></h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <p id="viewPinCity"></p>
+            <div id="viewPinAvgRating"></div>
+            <div id="viewPinComment"></div>
+            <form id="addReviewForm" style="margin-top:18px;">
+                <div class="form-group">
+                    <label>Add your rating</label>
+                    <div class="star-rating" id="reviewStarRating">
+                        <input type="radio" id="reviewStar5" name="reviewRating" value="5" required><label for="reviewStar5" title="5 stars">★</label>
+                        <input type="radio" id="reviewStar4" name="reviewRating" value="4"><label for="reviewStar4" title="4 stars">★</label>
+                        <input type="radio" id="reviewStar3" name="reviewRating" value="3"><label for="reviewStar3" title="3 stars">★</label>
+                        <input type="radio" id="reviewStar2" name="reviewRating" value="2"><label for="reviewStar2" title="2 stars">★</label>
+                        <input type="radio" id="reviewStar1" name="reviewRating" value="1"><label for="reviewStar1" title="1 star">★</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="reviewComment">Your comment</label>
+                    <textarea id="reviewComment" name="reviewComment" placeholder="Share your experience..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Submit Review</button>
+                </div>
+            </form>
+            <div id="viewPinReviews" style="max-height:180px;overflow-y:auto;margin-top:18px;"></div>
+        </div>
+    </div>
+    
+    <div id="modalPending" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Pending Approval</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <ul id="pendingList"></ul>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+
+        const PIN_TYPES = {
+            'cafe':      { label: 'Cafe / Coffee shop',    icon: '⦿', color: '#2196f3' },
+            'coworking': { label: 'Co-working space',      icon: '▣', color: '#64b5f6' },
+            'market':    { label: 'Local Food / Market',   icon: '◼', color: '#b3e0fc' },
+            'sunrise':   { label: 'Sunrise spot',          icon: '▴', color: '#42a5f5' },
+            'sunset':    { label: 'Sunset spot',           icon: '▾', color: '#1565c0' },
+            'water':     { label: 'Free Water refill',     icon: '◯', color: '#00b4d8' }
+        };
+
+        let map;
+        let allPins = [];
+        const pinsLayer = L.layerGroup();
+        // NEW: State for Admin Mode
+        let isAdmin = false; 
+
+        const DOM = {
+            loader: document.getElementById('loader'),
+            sidePanel: document.getElementById('sidePanel'),
+            panelToggleBtn: document.getElementById('panelToggleBtn'),
+            addPlaceBtn: document.getElementById('addPlaceBtn'),
+            myLocationBtn: document.getElementById('myLocationBtn'),
+            pendingBtn: document.getElementById('pendingBtn'),
+            clearDataBtn: document.getElementById('clearDataBtn'),
+            modalAdd: document.getElementById('modalAdd'),
+            modalView: document.getElementById('modalView'),
+            modalPending: document.getElementById('modalPending'),
+            addPlaceForm: document.getElementById('addPlaceForm'),
+            typeSelect: document.getElementById('type'),
+            cancelAddBtn: document.getElementById('cancelAddBtn'),
+            locationSearchInput: document.getElementById('locationSearch'),
+            locationSearchResults: document.getElementById('locationSearchResults'),
+            searchInput: document.getElementById('searchInput'),
+            searchResults: document.getElementById('searchResults'),
+            legendItems: document.getElementById('legendItems'),
+            // NEW: Admin Toggle Element
+            adminModeToggle: document.getElementById('adminModeToggle')
+        };
+        
+        function init() {
+            loadPinsFromStorage();
+            initMap();
+            populateStaticElements();
+            initEventListeners();
+            renderPins();
+            DOM.loader.style.opacity = '0';
+            setTimeout(() => DOM.loader.style.display = 'none', 500);
+        }
+
+        function initMap() {
+            map = L.map('map').setView([46.2276, 2.2137], 5);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            pinsLayer.addTo(map);
+        }
+        
+        function populateStaticElements() {
+            DOM.typeSelect.innerHTML = Object.keys(PIN_TYPES).map(key => 
+                `<option value="${key}">${PIN_TYPES[key].label}</option>`
+            ).join('');
+            
+            DOM.legendItems.innerHTML = Object.keys(PIN_TYPES).map(key => {
+                const type = PIN_TYPES[key];
+                return `
+                    <div class="legend-item">
+                        <div class="pin-icon" style="background-color: ${type.color};">
+                            <div class="pin-icon-inner">${type.icon}</div>
+                        </div>
+                        <span>${type.label}</span>
+                    </div>`;
+            }).join('');
+        }
+        
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+
+        function initEventListeners() {
+            DOM.addPlaceBtn.addEventListener('click', () => {
+                DOM.addPlaceForm.reset();
+                openModal(DOM.modalAdd);
+            });
+            DOM.myLocationBtn.addEventListener('click', locateUser);
+            DOM.pendingBtn.addEventListener('click', openPendingModal);
+            DOM.panelToggleBtn.addEventListener('click', () => DOM.sidePanel.classList.toggle('active'));
+
+            map.on('click', onMapClick);
+            
+            document.querySelectorAll('.modal-overlay .close-btn').forEach(btn => 
+                btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay')))
+            );
+            DOM.cancelAddBtn.addEventListener('click', () => closeModal(DOM.modalAdd));
+            
+            DOM.addPlaceForm.addEventListener('submit', handleAddPin);
+            
+            DOM.searchInput.addEventListener('input', handleMainSearch);
+            DOM.locationSearchInput.addEventListener('input', debounce(handleLocationSearch, 300));
+            
+            // NEW: Admin Toggle Listener
+            DOM.adminModeToggle.addEventListener('change', toggleAdminMode);
+        }
+
+        function loadPinsFromStorage() {
+            const storedPins = localStorage.getItem('lostSolesPins');
+            allPins = storedPins ? JSON.parse(storedPins) : [];
+        }
+
+        function savePinsToStorage() {
+            localStorage.setItem('lostSolesPins', JSON.stringify(allPins));
+        }
+
+        function renderPins() {
+            pinsLayer.clearLayers();
+            const approvedPins = allPins.filter(pin => pin.approved);
+            
+            approvedPins.forEach(pin => {
+                const typeInfo = PIN_TYPES[pin.type];
+                if (!typeInfo) return;
+
+                const customIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div class="pin-icon" style="background-color: ${typeInfo.color};"><div class="pin-icon-inner">${typeInfo.icon}</div></div>`,
+                    iconSize: [30, 42],
+                    iconAnchor: [15, 42]
+                });
+
+                const marker = L.marker([pin.lat, pin.lng], { icon: customIcon });
+                marker.on('click', () => openViewModal(pin));
+                pinsLayer.addLayer(marker);
+            });
+        }
+        
+        async function onMapClick(e) {
+            const { lat, lng } = e.latlng;
+            DOM.addPlaceForm.reset();
+            DOM.addPlaceForm.lat.value = lat.toFixed(6);
+            DOM.addPlaceForm.lng.value = lng.toFixed(6);
+            
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                const data = await response.json();
+                if (data.address) {
+                    const addr = data.address;
+                    const name = addr.amenity || addr.shop || addr.tourism || data.display_name.split(',')[0];
+                    const city = addr.city || addr.town || addr.village || addr.county || '';
+                    DOM.addPlaceForm.name.value = name;
+                    DOM.addPlaceForm.city.value = city;
+                }
+            } catch (error) { console.error('Reverse geocoding failed:', error); }
+            
+            openModal(DOM.modalAdd);
+        }
+        
+        function handleAddPin(e) {
+            e.preventDefault();
+            const formData = new FormData(DOM.addPlaceForm);
+            const newPin = {
+                id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
+                type: formData.get('type'),
+                name: formData.get('name'),
+                city: formData.get('city'),
+                lat: parseFloat(formData.get('lat')),
+                lng: parseFloat(formData.get('lng')),
+                rating: parseInt(formData.get('rating'), 10), 
+                comment: formData.get('comment'),
+                approved: false,
+                ratings: [],
+                comments: []
+            };
+            
+            allPins.push(newPin);
+            savePinsToStorage();
+            
+            alert('Place submitted for approval!');
+            closeModal(DOM.modalAdd);
+        }
+        
+        function locateUser() {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    map.setView([latitude, longitude], 13);
+                },
+                () => { alert('Could not get your location. Please enable location services.'); }
+            );
+        }
+
+        // ...existing code...
+
+        async function handleMainSearch(e) {
+            const query = e.target.value.trim();
+            if (query.length < 2) { DOM.searchResults.innerHTML = ''; return; }
+
+            // 1. Search saved pins
+            const pinResults = allPins.filter(pin =>
+                pin.approved && (pin.name.toLowerCase().includes(query.toLowerCase()) || pin.city.toLowerCase().includes(query.toLowerCase()))
+            );
+
+            // 2. If query is at least 3 chars, also search Nominatim
+            let nominatimResults = [];
+            if (query.length >= 3) {
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1`);
+                    nominatimResults = await response.json();
+                } catch (error) {
+                    nominatimResults = [];
+                }
+            }
+
+            // 3. Render results: pins first, then Nominatim
+            let html = '';
+            if (pinResults.length > 0) {
+                html += pinResults.map(pin => `<li data-id="${pin.id}" data-type="pin">${pin.name}, ${pin.city}</li>`).join('');
+            }
+            if (nominatimResults.length > 0) {
+                html += nominatimResults.map(result => {
+                    const addr = result.address || {};
+                    const name = addr.amenity || addr.shop || addr.tourism || result.display_name.split(',')[0];
+                    const city = addr.city || addr.town || addr.village || addr.county || '';
+                    return `<li data-lat="${result.lat}" data-lon="${result.lon}" data-type="nominatim">${name}${city ? ', ' + city : ''} <span style='color:#00b4d8'>(map search)</span></li>`;
+                }).join('');
+            }
+            DOM.searchResults.innerHTML = html;
+
+            // 4. Click handlers
+            document.querySelectorAll('#searchResults li').forEach(item => {
+                if (item.dataset.type === 'pin') {
+                    item.addEventListener('click', () => {
+                        const pin = allPins.find(p => p.id == item.dataset.id);
+                        if(pin) {
+                            map.setView([pin.lat, pin.lng], map.getMaxZoom ? map.getMaxZoom() : 19);
+                            DOM.searchInput.value = '';
+                            DOM.searchResults.innerHTML = '';
+                            if (DOM.sidePanel.classList.contains('active')) { DOM.sidePanel.classList.remove('active'); }
+                        }
+                    });
+                } else if (item.dataset.type === 'nominatim') {
+                    item.addEventListener('click', () => {
+                        const lat = parseFloat(item.dataset.lat);
+                        const lon = parseFloat(item.dataset.lon);
+                        map.setView([lat, lon], map.getMaxZoom ? map.getMaxZoom() : 19);
+                        DOM.searchInput.value = '';
+                        DOM.searchResults.innerHTML = '';
+                        if (DOM.sidePanel.classList.contains('active')) { DOM.sidePanel.classList.remove('active'); }
+                    });
+                }
+            });
+        }
+        
+        async function handleLocationSearch(e) {
+            const query = e.target.value;
+            if (query.length < 3) { DOM.locationSearchResults.innerHTML = ''; return; }
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1`);
+                const results = await response.json();
+                DOM.locationSearchResults.innerHTML = results.map(result => `<div data-result='${JSON.stringify(result)}'>${result.display_name}</div>`).join('');
+
+                document.querySelectorAll('#locationSearchResults div').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        const resultData = JSON.parse(e.target.dataset.result);
+                        const addr = resultData.address;
+                        const name = addr.amenity || addr.shop || addr.tourism || resultData.display_name.split(',')[0];
+                        const city = addr.city || addr.town || addr.village || addr.county || '';
+                        
+                        DOM.addPlaceForm.name.value = name;
+                        DOM.addPlaceForm.city.value = city;
+                        DOM.addPlaceForm.lat.value = parseFloat(resultData.lat).toFixed(6);
+                        DOM.addPlaceForm.lng.value = parseFloat(resultData.lon).toFixed(6);
+                        
+                        DOM.locationSearchResults.innerHTML = '';
+                        DOM.locationSearchInput.value = '';
+                    });
+                });
+            } catch (error) {
+                console.error('Location search failed:', error);
+                DOM.locationSearchResults.innerHTML = '<div>Error fetching locations.</div>';
+            }
+        }
+        
+        // NEW: Toggle Admin Mode Function
+        function toggleAdminMode(e) {
+            isAdmin = e.target.checked;
+            DOM.pendingBtn.style.display = isAdmin ? 'block' : 'none';
+            if (isAdmin) {
+                DOM.sidePanel.classList.add('admin-mode');
+            } else {
+                DOM.sidePanel.classList.remove('admin-mode');
+                closeModal(DOM.modalPending); 
+            }
+        }
+        
+        function openModal(modal) { modal.classList.add('active'); }
+        function closeModal(modal) {
+            DOM.locationSearchResults.innerHTML = '';
+            modal.classList.remove('active');
+        }
+        
+        function openViewModal(pin) {
+            document.getElementById('viewPinName').textContent = pin.name;
+            document.getElementById('viewPinCity').textContent = `${PIN_TYPES[pin.type].label} in ${pin.city}`;
+            // Aggregate all ratings (original + reviews)
+            let allRatings = [pin.rating].concat((pin.comments||[]).map(r => r.rating).filter(r => typeof r === 'number'));
+            let avg = allRatings.length ? (allRatings.reduce((a,b)=>a+b,0)/allRatings.length) : 0;
+            document.getElementById('viewPinAvgRating').innerHTML = `<b>Average rating:</b> ${avg.toFixed(2)} / 5 <span style='color:#f39c12'>${'★'.repeat(Math.round(avg))}${'☆'.repeat(5-Math.round(avg))}</span> <small>(${allRatings.length} review${allRatings.length!==1?'s':''})</small>`;
+            document.getElementById('viewPinComment').innerHTML = `<b>Original comment:</b><br>${pin.comment || 'No comment provided.'}`;
+            // Show all reviews
+            let reviewsHtml = '';
+            if (pin.comments && pin.comments.length) {
+                reviewsHtml = '<div style="margin-top:12px"><b>Visitor Reviews:</b><ul style="margin:8px 0 0 0;padding:0;list-style:none;">' +
+                    pin.comments.map(r => `<li style='margin-bottom:10px;'><span style='color:#f39c12'>${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span> <b>${r.rating}/5</b> <span style='color:#888;font-size:0.9em'>${r.timestamp ? new Date(r.timestamp).toLocaleString() : ''}</span><br>${r.comment ? r.comment : ''}</li>`).join('') +
+                    '</ul></div>';
+            }
+            document.getElementById('viewPinReviews').innerHTML = reviewsHtml;
+            // Reset review form
+            const reviewForm = document.getElementById('addReviewForm');
+            reviewForm.reset();
+            reviewForm.onsubmit = function(e) {
+                e.preventDefault();
+                const rating = parseInt(reviewForm.reviewRating.value, 10);
+                const comment = reviewForm.reviewComment.value.trim();
+                if (!rating) return;
+                if (!pin.comments) pin.comments = [];
+                pin.comments.push({ rating, comment, timestamp: Date.now() });
+                savePinsToStorage();
+                closeModal(DOM.modalView);
+            };
+            openModal(DOM.modalView);
+        }
+        
+        // NEW: Localized approval/rejection functions with Admin check
+        function approvePin(id) {
+            if (!isAdmin) return; // Basic security check
+            const pin = allPins.find(p => p.id === id);
+            if (pin) pin.approved = true;
+            savePinsToStorage();
+            renderPins();
+            // Re-render pending list to reflect the change immediately
+            openPendingModal(); 
+        }
+        
+        function rejectPin(id) {
+            if (!isAdmin) return; // Basic security check
+            allPins = allPins.filter(p => p.id !== id);
+            savePinsToStorage();
+            // Re-render pending list to reflect the change immediately
+            openPendingModal(); 
+        }
+        
+        function openPendingModal() {
+            if (!isAdmin) return; // Prevent opening if not admin
+            
+            const pendingPins = allPins.filter(pin => !pin.approved);
+            const pendingList = document.getElementById('pendingList');
+            
+            if (pendingPins.length === 0) {
+                pendingList.innerHTML = '<li>No pending pins for approval.</li>';
+            } else {
+                pendingList.innerHTML = pendingPins.map(pin => `
+                    <li data-id="${pin.id}">
+                        <div><strong>${pin.name}</strong><br><small>${pin.city} (${PIN_TYPES[pin.type].label})</small></div>
+                        <div class="pending-actions">
+                            <button class="btn btn-secondary btn-sm approve-pin-btn">Approve</button>
+                            <button class="btn btn-danger btn-sm reject-pin-btn">Reject</button>
+                        </div>
+                    </li>`).join('');
+                
+                // NEW: Attach event listeners dynamically for approval/rejection
+                pendingList.querySelectorAll('.approve-pin-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.target.closest('li').dataset.id;
+                        approvePin(id);
+                    });
+                });
+                pendingList.querySelectorAll('.reject-pin-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.target.closest('li').dataset.id;
+                        rejectPin(id);
+                    });
+                });
+            }
+            openModal(DOM.modalPending);
+        }
+        
+        // REMOVE the previous window.app exposure
+        /*
+        window.app = {
+            approvePin: function(id) { ... },
+            rejectPin: function(id) { ... }
+        };
+        */
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to delete ALL data? This cannot be undone.')) {
+                localStorage.removeItem('lostSolesPins');
+                allPins = [];
+                renderPins();
+                alert('All data cleared.');
+            }
+        }
+
+        init();
+    });
+    </script>
+</body>
+</html>
