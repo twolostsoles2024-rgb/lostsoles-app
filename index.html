@@ -210,7 +210,7 @@
 
         .pin-icon {
             width: 32px; height: 32px; border-radius: 8px;
-            background: #fff;
+            background: #fff !important;
             display: flex; justify-content: center; align-items: center;
             box-shadow: 0 2px 8px rgba(10,35,66,0.15);
             border: 2px solid #e74c3c;
@@ -526,7 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return `
                         <div class="legend-item" style="display:flex;align-items:center;margin-bottom:13px;gap:12px;">
                             <input type="checkbox" class="type-filter" id="filter-${key}" data-type="${key}" checked style="margin-right:7px;transform:scale(1.25);">
-                            <div class="pin-icon" style="background-color: ${type.color};">
+                            <div class="pin-icon">
                                 <div class="pin-icon-inner">${type.icon}</div>
                             </div>
                             <label for="filter-${key}" style="margin-left:6px;cursor:pointer;font-size:1.04em;">${type.label}</label>
@@ -613,7 +613,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const customIcon = L.divIcon({
                     className: 'custom-div-icon',
-                    html: `<div class="pin-icon" style="background-color: ${typeInfo.color};"><div class="pin-icon-inner">${typeInfo.icon}</div></div>`,
+                    html: `<div class="pin-icon"><div class="pin-icon-inner">${typeInfo.icon}</div></div>`,
                     iconSize: [30, 42],
                     iconAnchor: [15, 42]
                 });
