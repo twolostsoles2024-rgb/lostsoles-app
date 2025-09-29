@@ -845,11 +845,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Reset review form
             const reviewForm = document.getElementById('addReviewForm');
             reviewForm.reset();
-            // Fix: Use addEventListener for submit to ensure mobile compatibility
-            reviewForm.addEventListener('submit', function(e) {
+            // Remove previous submit event listeners to prevent stacking
+            const newReviewForm = reviewForm.cloneNode(true);
+            reviewForm.parentNode.replaceChild(newReviewForm, reviewForm);
+            newReviewForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                const rating = parseInt(reviewForm.reviewRating.value, 10);
-                const comment = reviewForm.reviewComment.value.trim();
+                const rating = parseInt(newReviewForm.reviewRating.value, 10);
+                const comment = newReviewForm.reviewComment.value.trim();
                 if (!rating) return;
                 if (!pin.comments) pin.comments = [];
                 pin.comments.push({ rating, comment, timestamp: Date.now() });
