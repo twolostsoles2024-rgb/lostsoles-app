@@ -11,36 +11,35 @@
 <!-- Storage -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 <script>
-  // Your Firebase config from the console
-  const firebaseConfig = {
-    apiKey: "AIzaSyAi0x7qTclT_JbSvTSgFWIIeYCKR28ZRFQ",
-    authDomain: "lostsoles.firebaseapp.com",
-    projectId: "lostsoles",
-    storageBucket: "lostsoles.firebasestorage.app",
-    messagingSenderId: "54345832025",
-    appId: "1:54345832025:web:dbb0f85c868e9f71d44348"
-    }
-}
-});
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    // Your Firebase config from the console
+    const firebaseConfig = {
+        apiKey: "AIzaSyAi0x7qTclT_JbSvTSgFWIIeYCKR28ZRFQ",
+        authDomain: "lostsoles.firebaseapp.com",
+        projectId: "lostsoles",
+        storageBucket: "lostsoles.firebasestorage.app",
+        messagingSenderId: "54345832025",
+        appId: "1:54345832025:web:dbb0f85c868e9f71d44348"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+</script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
      crossorigin=""/>
-
-
-    <style>
-        :root {
-            --primary-color: #0077b6;
-            --secondary-color: #00b4d8;
-            --danger-color: #e74c3c;
-            --light-color: #ecf0f1;
-            --dark-color: #2c3e50;
-            --panel-bg: rgba(44, 62, 80, 0.95);
-            --modal-bg: #ffffff;
-            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            --star-color: #ccc;
-            --star-color-filled: #f39c12;
-        }
+<style>
+    :root {
+        --primary-color: #0077b6;
+        --secondary-color: #00b4d8;
+        --danger-color: #e74c3c;
+        --light-color: #ecf0f1;
+        --dark-color: #2c3e50;
+        --panel-bg: rgba(44, 62, 80, 0.95);
+        --modal-bg: #ffffff;
+        --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        --star-color: #ccc;
+        --star-color-filled: #f39c12;
+    }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -976,7 +975,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         init();
     }
-}
 });
 </script>
 </body>
