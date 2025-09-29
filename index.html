@@ -257,7 +257,7 @@
 
     <aside id="sidePanel">
         <div class="panel-header">
-            <h1>LostSoles</h1>
+            <h1>LostSoles <span id="desktopVersion" style="font-size:1.1rem;font-weight:normal;opacity:0.7;margin-left:6px;vertical-align:middle;"></span></h1>
             <p>Traveler Sourced Awesomeness</p>
         </div>
         <div class="search-container">
@@ -268,19 +268,22 @@
                 </button>
             </div>
             <ul id="searchResults"></ul>
+            <button id="addPlaceBtn" class="btn btn-primary" style="width:100%;margin:14px 0 0 0;">📍 Add New Place</button>
         </div>
-        <div class="legend">
+        <div class="legend" style="margin-top:32px;">
             <h3>Legend</h3>
             <div id="legendItems"></div>
         </div>
         
         <div class="admin-mode-toggle">
-            <label for="adminModeToggle">Admin Mode</label>
-            <input type="checkbox" id="adminModeToggle">
+        </div>
+        <div style="flex:1;"></div>
+        <div class="admin-mode-toggle" style="margin: 24px 0 8px 0; justify-content:center; align-items:center; display:flex;">
+            <label for="adminModeToggle" style="font-size:0.95rem; margin-right:8px;">Admin</label>
+            <input type="checkbox" id="adminModeToggle" style="width:20px;height:20px;">
         </div>
 
         <div class="actions">
-            <button id="addPlaceBtn" class="btn btn-primary">📍 Add New Place</button>
             <button id="pendingBtn" class="btn btn-admin" style="display: none;">⏳ Pending Pins</button>
         </div>
     </aside>
@@ -305,11 +308,15 @@
                 </div>
                 <div class="form-group">
                     <label for="name">Name / Place</label>
-                    <input type="text" id="name" name="name" required readonly>
+                    <input type="text" id="name" name="name" required>
+                <div class="form-group">
+                    <label for="street">Street</label>
+                    <input type="text" id="street" name="street">
+                </div>
                 </div>
                 <div class="form-group">
                     <label for="city">City</label>
-                    <input type="text" id="city" name="city" required readonly>
+                    <input type="text" id="city" name="city" required>
                 </div>
                 <div class="form-group">
                     <label for="lat">Latitude</label>
@@ -429,6 +436,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         
         function init() {
+            // Set version number in desktop header
+            document.getElementById('desktopVersion').textContent = 'v1.1';
                         // Mobile header setup
                                     if (window.innerWidth <= 768) {
                                             const version = 'v1.1';
@@ -570,8 +579,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const addr = data.address;
                     const name = addr.amenity || addr.shop || addr.tourism || data.display_name.split(',')[0];
                     const city = addr.city || addr.town || addr.village || addr.county || '';
+                    const street = addr.road || addr.pedestrian || addr.cycleway || addr.footway || addr.highway || '';
                     DOM.addPlaceForm.name.value = name;
                     DOM.addPlaceForm.city.value = city;
+                    DOM.addPlaceForm.street.value = street;
                 }
             } catch (error) { console.error('Reverse geocoding failed:', error); }
             
@@ -687,6 +698,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         const resultData = JSON.parse(e.target.dataset.result);
                         const addr = resultData.address;
                         const name = addr.amenity || addr.shop || addr.tourism || resultData.display_name.split(',')[0];
+
+                        DOM.addPlaceForm.name.value = name;
+                        DOM.addPlaceForm.city.value = city;
+                        DOM.addPlaceForm.street.value = street;
                         const city = addr.city || addr.town || addr.village || addr.county || '';
                         
                         DOM.addPlaceForm.name.value = name;
