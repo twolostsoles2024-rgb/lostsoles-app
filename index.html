@@ -232,11 +232,12 @@
             }
             #sidePanel.active { transform: translateY(0); }
             .panel-toggle {
-                position: fixed; left: 50%; bottom: 60vh; transform: translate(-50%, 50%); z-index: 2500;
+                position: fixed; top: 12px; left: 12px; z-index: 2500;
                 background-color: var(--panel-bg); color: white; border: 2px solid var(--primary-color);
-                border-radius: 12px; width: 48px; height: 48px;
+                border-radius: 12px; width: 44px; height: 44px;
                 display: flex; justify-content: center; align-items: center;
                 font-size: 2rem; cursor: pointer;
+                box-shadow: 0 2px 8px rgba(10,35,66,0.12);
             }
             #map {
                 height: 40vh !important;
@@ -252,6 +253,7 @@
 
     <div id="loader">Initializing map — please wait...</div>
     <div class="panel-toggle" id="panelToggleBtn">☰</div>
+    <header id="mobileHeader" style="display:none;"></header>
 
     <aside id="sidePanel">
         <div class="panel-header">
@@ -427,6 +429,36 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         
         function init() {
+                        // Mobile header setup
+                        if (window.innerWidth <= 768) {
+                                const mobileHeader = document.getElementById('mobileHeader');
+                                mobileHeader.style.display = 'flex';
+                                mobileHeader.style.flexDirection = 'column';
+                                mobileHeader.style.alignItems = 'stretch';
+                                mobileHeader.style.background = 'linear-gradient(90deg,#0a2342 80%,#185b8c 100%)';
+                                mobileHeader.style.color = '#fff';
+                                mobileHeader.style.padding = '12px 10px 8px 10px';
+                                mobileHeader.innerHTML = `
+                                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                                        <span style="font-size:1.3rem;font-weight:bold;letter-spacing:1px;">LostSoles</span>
+                                    </div>
+                                    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+                                        <input type="text" id="mobileSearchInput" placeholder="Where are you going today?" style="flex:1;padding:8px 10px;border-radius:8px;border:none;font-size:1rem;background:#23395d;color:#fff;outline:none;">
+                                        <button id="mobileLocationBtn" class="btn" style="width:38px;height:38px;min-width:38px;min-height:38px;padding:0;background:#185b8c;border:2px solid #2196f3;border-radius:8px;display:flex;align-items:center;justify-content:center;" title="Zoom to my location">
+                                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2196f3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8" stroke="#2196f3" stroke-width="2.2" fill="#fff"/><circle cx="12" cy="12" r="3" fill="#2196f3"/><line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" /></svg>
+                                        </button>
+                                    </div>
+                                `;
+                                // Sync search and location events
+                                document.getElementById('mobileSearchInput').addEventListener('input', e => {
+                                    DOM.searchInput.value = e.target.value;
+                                    DOM.searchInput.dispatchEvent(new Event('input'));
+                                });
+                                DOM.searchInput.addEventListener('input', e => {
+                                    document.getElementById('mobileSearchInput').value = e.target.value;
+                                });
+                                document.getElementById('mobileLocationBtn').addEventListener('click', locateUser);
+                        }
             loadPinsFromStorage();
             initMap();
             populateStaticElements();
