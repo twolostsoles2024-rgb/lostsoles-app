@@ -223,7 +223,21 @@
         }
         
         @media (max-width: 768px) {
-            body { flex-direction: column; }
+            body { flex-direction: column; padding-top: 92px !important; }
+            #mobileHeader {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                z-index: 3000;
+                display: flex !important;
+                flex-direction: column;
+                align-items: stretch;
+                background: linear-gradient(90deg,#0a2342 80%,#185b8c 100%);
+                color: #fff;
+                padding: 12px 10px 8px 10px;
+                box-shadow: 0 2px 12px rgba(10,35,66,0.18);
+            }
             #sidePanel {
                 position: fixed; left: 0; bottom: 0; width: 100vw; height: 60vh; max-height: 420px;
                 top: auto; transform: translateY(100%); box-shadow: 0 -2px 16px rgba(10,35,66,0.25);
@@ -232,7 +246,7 @@
             }
             #sidePanel.active { transform: translateY(0); }
             .panel-toggle {
-                position: fixed; top: 12px; left: 12px; z-index: 2500;
+                position: fixed; top: 12px; left: 12px; z-index: 3500;
                 background-color: var(--panel-bg); color: white; border: 2px solid var(--primary-color);
                 border-radius: 12px; width: 44px; height: 44px;
                 display: flex; justify-content: center; align-items: center;
@@ -241,6 +255,7 @@
             }
             #map {
                 height: 40vh !important;
+                margin-top: 0 !important;
             }
             .modal {
                 width: 98vw; max-width: 98vw; max-height: 90vh;
@@ -253,7 +268,7 @@
 
     <div id="loader">Initializing map — please wait...</div>
     <div class="panel-toggle" id="panelToggleBtn">☰</div>
-    <header id="mobileHeader" style="display:none;"></header>
+    <header id="mobileHeader"></header>
 
     <aside id="sidePanel">
         <div class="panel-header">
@@ -437,10 +452,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         function init() {
             // Set version number in desktop header
-            document.getElementById('desktopVersion').textContent = 'v1.2';
+            document.getElementById('desktopVersion').textContent = 'v1.3';
             // Mobile header setup: banner with name, search, zoom, add new place
             if (window.innerWidth <= 768) {
-                const version = 'v1.2';
+                const version = 'v1.3';
                 const mobileHeader = document.getElementById('mobileHeader');
                 mobileHeader.style.display = 'flex';
                 mobileHeader.style.flexDirection = 'column';
