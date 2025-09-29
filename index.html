@@ -273,7 +273,7 @@
     <aside id="sidePanel">
         <div class="panel-header">
             <h1>LostSoles <span id="desktopVersion" style="font-size:1.1rem;font-weight:normal;opacity:0.7;margin-left:6px;vertical-align:middle;"></span></h1>
-            <p>Traveler Sourced Awesomeness</p>
+            <p>Travelers Sharing Awesome Spots</p>
         </div>
         <div class="search-container">
             <div style="display:flex;gap:8px;align-items:center;">
@@ -318,6 +318,11 @@
                     <div id="locationSearchResults"></div>
                 </div>
                 <div class="form-group">
+                    <label for="placeImage">Upload a picture (optional, 1 only)</label>
+                    <input type="file" id="placeImage" name="placeImage" accept="image/*" capture="environment">
+                    <img id="placeImagePreview" src="" alt="Preview" style="display:none;max-width:100%;margin-top:8px;border-radius:8px;" />
+                </div>
+                <div class="form-group">
                     <label for="type">Type</label>
                     <select id="type" name="type" required></select>
                 </div>
@@ -357,6 +362,7 @@
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-danger" id="cancelAddBtn">Cancel</button>
+                    <button type="button" class="btn btn-secondary" id="closeAddBtn">Close</button>
                     <button type="submit" class="btn btn-primary">Submit for Approval</button>
                 </div>
             </form>
@@ -371,6 +377,7 @@
             </div>
             <p id="viewPinCity"></p>
             <div id="viewPinAvgRating"></div>
+            <div id="viewPinImageContainer" style="margin:12px 0;"></div>
             <div id="viewPinComment"></div>
             <form id="addReviewForm" style="margin-top:18px;">
                 <div class="form-group">
@@ -418,7 +425,9 @@ document.addEventListener('DOMContentLoaded', () => {
             'market':    { label: 'Local Food / Market',   icon: '◼', color: '#b3e0fc' },
             'sunrise':   { label: 'Sunrise spot',          icon: '▴', color: '#42a5f5' },
             'sunset':    { label: 'Sunset spot',           icon: '▾', color: '#1565c0' },
-            'water':     { label: 'Free Water refill',     icon: '◯', color: '#00b4d8' }
+            'water':     { label: 'Free Water refill',     icon: '◯', color: '#00b4d8' },
+            'peoplewatch': { label: 'People Watching spot', icon: '👀', color: '#f39c12' },
+            'worldgoby': { label: 'Watching the world go by.. spot', icon: '🌍', color: '#43a047' }
         };
 
         let map;
@@ -467,6 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
                         <span style="font-size:1.3rem;font-weight:bold;letter-spacing:1px;">LostSoles <span style='font-size:0.95rem;font-weight:normal;opacity:0.7;margin-left:4px;'>${version}</span></span>
                     </div>
+                    <div style="font-size:0.95rem;opacity:0.8;margin-top:2px;margin-bottom:2px;">Travelers Sharing Awesome Spots</div>
                     <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
                         <input type="text" id="mobileSearchInput" placeholder="Where are you going today?" style="flex:1;padding:8px 10px;border-radius:8px;border:none;font-size:1rem;background:#23395d;color:#fff;outline:none;">
                         <button id="mobileLocationBtn" class="btn" style="width:38px;height:38px;min-width:38px;min-height:38px;padding:0;background:#185b8c;border:2px solid #2196f3;border-radius:8px;display:flex;align-items:center;justify-content:center;" title="Zoom to my location">
@@ -534,6 +544,13 @@ document.addEventListener('DOMContentLoaded', () => {
         function initEventListeners() {
             DOM.addPlaceBtn.addEventListener('click', () => {
                 DOM.addPlaceForm.reset();
+                const fileInput = document.getElementById('placeImage');
+                const previewImg = document.getElementById('placeImagePreview');
+                if (fileInput) fileInput.value = '';
+                if (previewImg) {
+                    previewImg.src = '';
+                    previewImg.style.display = 'none';
+                }
                 openModal(DOM.modalAdd);
             });
             DOM.myLocationBtn.addEventListener('click', locateUser);
@@ -546,8 +563,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay')))
             );
             DOM.cancelAddBtn.addEventListener('click', () => closeModal(DOM.modalAdd));
+            const closeAddBtn = document.getElementById('closeAddBtn');
+            if (closeAddBtn) closeAddBtn.addEventListener('click', () => closeModal(DOM.modalAdd));
             
             DOM.addPlaceForm.addEventListener('submit', handleAddPin);
+            // Image preview logic
+            const fileInput = document.getElementById('placeImage');
+            const previewImg = document.getElementById('placeImagePreview');
+            if (fileInput && previewImg) {
+                fileInput.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            previewImg.src = e.target.result;
+                            previewImg.style.display = 'block';
+                        };
+                        reader.readAsDataURL(this.files[0]);
+                    } else {
+                        previewImg.src = '';
+                        previewImg.style.display = 'none';
+                    }
+                });
+            }
             
             DOM.searchInput.addEventListener('input', handleMainSearch);
             DOM.locationSearchInput.addEventListener('input', debounce(handleLocationSearch, 300));
@@ -612,25 +649,37 @@ document.addEventListener('DOMContentLoaded', () => {
         function handleAddPin(e) {
             e.preventDefault();
             const formData = new FormData(DOM.addPlaceForm);
-            const newPin = {
-                id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
-                type: formData.get('type'),
-                name: formData.get('name'),
-                city: formData.get('city'),
-                lat: parseFloat(formData.get('lat')),
-                lng: parseFloat(formData.get('lng')),
-                rating: parseInt(formData.get('rating'), 10), 
-                comment: formData.get('comment'),
-                approved: false,
-                ratings: [],
-                comments: []
-            };
-            
-            allPins.push(newPin);
-            savePinsToStorage();
-            
-            alert('Place submitted for approval!');
-            closeModal(DOM.modalAdd);
+            const fileInput = document.getElementById('placeImage');
+            const file = fileInput && fileInput.files && fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    savePinWithImage(ev.target.result);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                savePinWithImage(null);
+            }
+            function savePinWithImage(imageData) {
+                const newPin = {
+                    id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
+                    type: formData.get('type'),
+                    name: formData.get('name'),
+                    city: formData.get('city'),
+                    lat: parseFloat(formData.get('lat')),
+                    lng: parseFloat(formData.get('lng')),
+                    rating: parseInt(formData.get('rating'), 10),
+                    comment: formData.get('comment'),
+                    approved: false,
+                    ratings: [],
+                    comments: [],
+                    image: imageData
+                };
+                allPins.push(newPin);
+                savePinsToStorage();
+                alert('Place submitted for approval!');
+                closeModal(DOM.modalAdd);
+            }
         }
         
         function locateUser() {
@@ -718,17 +767,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         const resultData = JSON.parse(e.target.dataset.result);
                         const addr = resultData.address;
                         const name = addr.amenity || addr.shop || addr.tourism || resultData.display_name.split(',')[0];
-
+                        const city = addr.city || addr.town || addr.village || addr.county || '';
+                        const street = addr.road || addr.pedestrian || addr.cycleway || addr.footway || addr.highway || '';
                         DOM.addPlaceForm.name.value = name;
                         DOM.addPlaceForm.city.value = city;
                         DOM.addPlaceForm.street.value = street;
-                        const city = addr.city || addr.town || addr.village || addr.county || '';
-                        
-                        DOM.addPlaceForm.name.value = name;
-                        DOM.addPlaceForm.city.value = city;
                         DOM.addPlaceForm.lat.value = parseFloat(resultData.lat).toFixed(6);
                         DOM.addPlaceForm.lng.value = parseFloat(resultData.lon).toFixed(6);
-                        
                         DOM.locationSearchResults.innerHTML = '';
                         DOM.locationSearchInput.value = '';
                     });
@@ -764,6 +809,13 @@ document.addEventListener('DOMContentLoaded', () => {
             let allRatings = [pin.rating].concat((pin.comments||[]).map(r => r.rating).filter(r => typeof r === 'number'));
             let avg = allRatings.length ? (allRatings.reduce((a,b)=>a+b,0)/allRatings.length) : 0;
             document.getElementById('viewPinAvgRating').innerHTML = `<b>Average rating:</b> ${avg.toFixed(2)} / 5 <span style='color:#f39c12'>${'★'.repeat(Math.round(avg))}${'☆'.repeat(5-Math.round(avg))}</span> <small>(${allRatings.length} review${allRatings.length!==1?'s':''})</small>`;
+            // Show image if present
+            const imgContainer = document.getElementById('viewPinImageContainer');
+            if (pin.image) {
+                imgContainer.innerHTML = `<img src="${pin.image}" alt="Place image" style="max-width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);margin-bottom:8px;" />`;
+            } else {
+                imgContainer.innerHTML = '';
+            }
             document.getElementById('viewPinComment').innerHTML = `<b>Original comment:</b><br>${pin.comment || 'No comment provided.'}`;
             // Show all reviews
             let reviewsHtml = '';
