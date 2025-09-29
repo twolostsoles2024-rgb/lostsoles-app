@@ -4,42 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LostSoles - Traveler Sourced Awesomeness</title>
-<!-- Firebase App (core) -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<!-- Firestore -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<!-- Storage -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-<script>
-    // Your Firebase config from the console
-    const firebaseConfig = {
-        apiKey: "AIzaSyAi0x7qTclT_JbSvTSgFWIIeYCKR28ZRFQ",
-        authDomain: "lostsoles.firebaseapp.com",
-        projectId: "lostsoles",
-        storageBucket: "lostsoles.firebasestorage.app",
-        messagingSenderId: "54345832025",
-        appId: "1:54345832025:web:dbb0f85c868e9f71d44348"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-</script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
      crossorigin=""/>
-<style>
-    :root {
-        --primary-color: #0077b6;
-        --secondary-color: #00b4d8;
-        --danger-color: #e74c3c;
-        --light-color: #ecf0f1;
-        --dark-color: #2c3e50;
-        --panel-bg: rgba(44, 62, 80, 0.95);
-        --modal-bg: #ffffff;
-        --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        --star-color: #ccc;
-        --star-color-filled: #f39c12;
-    }
+
+    <style>
+        :root {
+            --primary-color: #0077b6;
+            --secondary-color: #00b4d8;
+            --danger-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --panel-bg: rgba(44, 62, 80, 0.95);
+            --modal-bg: #ffffff;
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --star-color: #ccc;
+            --star-color-filled: #f39c12;
+        }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -241,21 +223,7 @@
         }
         
         @media (max-width: 768px) {
-            body { flex-direction: column; padding-top: 92px !important; }
-            #mobileHeader {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                z-index: 3000;
-                display: flex !important;
-                flex-direction: column;
-                align-items: stretch;
-                background: linear-gradient(90deg,#0a2342 80%,#185b8c 100%);
-                color: #fff;
-                padding: 12px 10px 8px 10px;
-                box-shadow: 0 2px 12px rgba(10,35,66,0.18);
-            }
+            body { flex-direction: column; }
             #sidePanel {
                 position: fixed; left: 0; bottom: 0; width: 100vw; height: 60vh; max-height: 420px;
                 top: auto; transform: translateY(100%); box-shadow: 0 -2px 16px rgba(10,35,66,0.25);
@@ -264,21 +232,18 @@
             }
             #sidePanel.active { transform: translateY(0); }
             .panel-toggle {
-                position: fixed; top: 12px; left: 12px; z-index: 3500;
+                position: fixed; left: 50%; bottom: 60vh; transform: translate(-50%, 50%); z-index: 2500;
                 background-color: var(--panel-bg); color: white; border: 2px solid var(--primary-color);
-                border-radius: 12px; width: 44px; height: 44px;
+                border-radius: 12px; width: 48px; height: 48px;
                 display: flex; justify-content: center; align-items: center;
                 font-size: 2rem; cursor: pointer;
-                box-shadow: 0 2px 8px rgba(10,35,66,0.12);
             }
             #map {
                 height: 40vh !important;
-                margin-top: 0 !important;
             }
             .modal {
                 width: 98vw; max-width: 98vw; max-height: 90vh;
                 padding: 10px;
-                margin-top: 64px;
             }
         }
     </style>
@@ -287,12 +252,11 @@
 
     <div id="loader">Initializing map — please wait...</div>
     <div class="panel-toggle" id="panelToggleBtn">☰</div>
-    <header id="mobileHeader"></header>
 
     <aside id="sidePanel">
         <div class="panel-header">
-            <h1>LostSoles <span id="desktopVersion" style="font-size:1.1rem;font-weight:normal;opacity:0.7;margin-left:6px;vertical-align:middle;"></span></h1>
-            <p>Travelers Sharing Awesome Spots</p>
+            <h1>LostSoles</h1>
+            <p>Traveler Sourced Awesomeness</p>
         </div>
         <div class="search-container">
             <div style="display:flex;gap:8px;align-items:center;">
@@ -302,22 +266,19 @@
                 </button>
             </div>
             <ul id="searchResults"></ul>
-            <button id="addPlaceBtn" class="btn btn-primary" style="width:100%;margin:14px 0 0 0;">📍 Add New Place</button>
         </div>
-        <div class="legend" style="margin-top:32px;">
+        <div class="legend">
             <h3>Legend</h3>
             <div id="legendItems"></div>
         </div>
         
         <div class="admin-mode-toggle">
-        </div>
-        <div style="flex:1;"></div>
-        <div class="admin-mode-toggle" style="margin: 24px 0 8px 0; justify-content:center; align-items:center; display:flex;">
-            <label for="adminModeToggle" style="font-size:0.95rem; margin-right:8px;">Admin</label>
-            <input type="checkbox" id="adminModeToggle" style="width:20px;height:20px;">
+            <label for="adminModeToggle">Admin Mode</label>
+            <input type="checkbox" id="adminModeToggle">
         </div>
 
         <div class="actions">
+            <button id="addPlaceBtn" class="btn btn-primary">📍 Add New Place</button>
             <button id="pendingBtn" class="btn btn-admin" style="display: none;">⏳ Pending Pins</button>
         </div>
     </aside>
@@ -337,25 +298,16 @@
                     <div id="locationSearchResults"></div>
                 </div>
                 <div class="form-group">
-                    <label for="placeImage">Upload a picture (optional, 1 only)</label>
-                    <input type="file" id="placeImage" name="placeImage" accept="image/*">
-                    <img id="placeImagePreview" src="" alt="Preview" style="display:none;max-width:100%;margin-top:8px;border-radius:8px;" />
-                </div>
-                <div class="form-group">
                     <label for="type">Type</label>
                     <select id="type" name="type" required></select>
                 </div>
                 <div class="form-group">
                     <label for="name">Name / Place</label>
-                    <input type="text" id="name" name="name" required>
-                <div class="form-group">
-                    <label for="street">Street</label>
-                    <input type="text" id="street" name="street">
-                </div>
+                    <input type="text" id="name" name="name" required readonly>
                 </div>
                 <div class="form-group">
                     <label for="city">City</label>
-                    <input type="text" id="city" name="city" required>
+                    <input type="text" id="city" name="city" required readonly>
                 </div>
                 <div class="form-group">
                     <label for="lat">Latitude</label>
@@ -381,7 +333,6 @@
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-danger" id="cancelAddBtn">Cancel</button>
-                    <button type="button" class="btn btn-secondary" id="closeAddBtn">Close</button>
                     <button type="submit" class="btn btn-primary">Submit for Approval</button>
                 </div>
             </form>
@@ -396,7 +347,6 @@
             </div>
             <p id="viewPinCity"></p>
             <div id="viewPinAvgRating"></div>
-            <div id="viewPinImageContainer" style="margin:12px 0;"></div>
             <div id="viewPinComment"></div>
             <form id="addReviewForm" style="margin-top:18px;">
                 <div class="form-group">
@@ -444,9 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'market':    { label: 'Local Food / Market',   icon: '◼', color: '#b3e0fc' },
             'sunrise':   { label: 'Sunrise spot',          icon: '▴', color: '#42a5f5' },
             'sunset':    { label: 'Sunset spot',           icon: '▾', color: '#1565c0' },
-            'water':     { label: 'Free Water refill',     icon: '◯', color: '#00b4d8' },
-            'peoplewatch': { label: 'People Watching spot', icon: '👀', color: '#f39c12' },
-            'worldgoby': { label: 'Watching the world go by.. spot', icon: '🌍', color: '#43a047' }
+            'water':     { label: 'Free Water refill',     icon: '◯', color: '#00b4d8' }
         };
 
         let map;
@@ -479,46 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         
         function init() {
-            // Set version number in desktop header
-            document.getElementById('desktopVersion').textContent = 'v1.5';
-            // Mobile header setup: banner with name, search, zoom, add new place
-            if (window.innerWidth <= 768) {
-                const version = 'v1.5';
-                const mobileHeader = document.getElementById('mobileHeader');
-                mobileHeader.style.display = 'flex';
-                mobileHeader.style.flexDirection = 'column';
-                mobileHeader.style.alignItems = 'stretch';
-                mobileHeader.style.background = 'linear-gradient(90deg,#0a2342 80%,#185b8c 100%)';
-                mobileHeader.style.color = '#fff';
-                mobileHeader.style.padding = '12px 10px 8px 10px';
-                mobileHeader.innerHTML = `
-                    <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;">
-                        <span style="font-size:1.3rem;font-weight:bold;letter-spacing:1px;">LostSoles <span style='font-size:0.95rem;font-weight:normal;opacity:0.7;margin-left:4px;'>${version}</span></span>
-                    </div>
-                    <div style="font-size:0.95rem;opacity:0.8;margin-top:2px;margin-bottom:2px;display:flex;justify-content:flex-end;">Travelers Sharing Awesome Spots</div>
-                    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
-                        <input type="text" id="mobileSearchInput" placeholder="Where are you going today?" style="flex:1;padding:8px 10px;border-radius:8px;border:none;font-size:1rem;background:#23395d;color:#fff;outline:none;">
-                        <button id="mobileLocationBtn" class="btn" style="width:38px;height:38px;min-width:38px;min-height:38px;padding:0;background:#185b8c;border:2px solid #2196f3;border-radius:8px;display:flex;align-items:center;justify-content:center;" title="Zoom to my location">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2196f3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8" stroke="#2196f3" stroke-width="2.2" fill="#fff"/><circle cx="12" cy="12" r="3" fill="#2196f3"/><line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" /></svg>
-                        </button>
-                        <button id="mobileAddPlaceBtn" class="btn btn-primary" style="height:38px;min-width:38px;min-height:38px;padding:0 12px 0 10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;gap:4px;" title="Add New Place">📍</button>
-                    </div>
-                `;
-                // Sync search and location events
-                document.getElementById('mobileSearchInput').addEventListener('input', e => {
-                    DOM.searchInput.value = e.target.value;
-                    DOM.searchInput.dispatchEvent(new Event('input'));
-                });
-                DOM.searchInput.addEventListener('input', e => {
-                    document.getElementById('mobileSearchInput').value = e.target.value;
-                });
-                document.getElementById('mobileLocationBtn').addEventListener('click', locateUser);
-                document.getElementById('mobileAddPlaceBtn').addEventListener('click', () => {
-                    DOM.addPlaceForm.reset();
-                    openModal(DOM.modalAdd);
-                });
-            }
-            loadPinsFromFirestore();
+            loadPinsFromStorage();
             initMap();
             populateStaticElements();
             initEventListeners();
@@ -539,24 +448,17 @@ document.addEventListener('DOMContentLoaded', () => {
             DOM.typeSelect.innerHTML = Object.keys(PIN_TYPES).map(key => 
                 `<option value="${key}">${PIN_TYPES[key].label}</option>`
             ).join('');
-
-            // Add filter label and restyled checkbox filters to legend
-            DOM.legendItems.innerHTML = `
-                <div style="display:flex;align-items:center;font-weight:bold;font-size:1.08em;margin-bottom:10px;gap:7px;">
-                    <span style="font-size:1.2em;">&#128269;</span> Filter
-                </div>
-                ` +
-                Object.keys(PIN_TYPES).map(key => {
-                    const type = PIN_TYPES[key];
-                    return `
-                        <div class="legend-item" style="display:flex;align-items:center;margin-bottom:13px;gap:12px;">
-                            <input type="checkbox" class="type-filter" id="filter-${key}" data-type="${key}" checked style="margin-right:7px;transform:scale(1.25);">
-                            <div class="pin-icon" style="background-color: ${type.color};">
-                                <div class="pin-icon-inner">${type.icon}</div>
-                            </div>
-                            <label for="filter-${key}" style="margin-left:6px;cursor:pointer;font-size:1.04em;">${type.label}</label>
-                        </div>`;
-                }).join('');
+            
+            DOM.legendItems.innerHTML = Object.keys(PIN_TYPES).map(key => {
+                const type = PIN_TYPES[key];
+                return `
+                    <div class="legend-item">
+                        <div class="pin-icon" style="background-color: ${type.color};">
+                            <div class="pin-icon-inner">${type.icon}</div>
+                        </div>
+                        <span>${type.label}</span>
+                    </div>`;
+            }).join('');
         }
         
         function debounce(func, delay) {
@@ -570,13 +472,6 @@ document.addEventListener('DOMContentLoaded', () => {
         function initEventListeners() {
             DOM.addPlaceBtn.addEventListener('click', () => {
                 DOM.addPlaceForm.reset();
-                const fileInput = document.getElementById('placeImage');
-                const previewImg = document.getElementById('placeImagePreview');
-                if (fileInput) fileInput.value = '';
-                if (previewImg) {
-                    previewImg.src = '';
-                    previewImg.style.display = 'none';
-                }
                 openModal(DOM.modalAdd);
             });
             DOM.myLocationBtn.addEventListener('click', locateUser);
@@ -589,28 +484,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.addEventListener('click', () => closeModal(btn.closest('.modal-overlay')))
             );
             DOM.cancelAddBtn.addEventListener('click', () => closeModal(DOM.modalAdd));
-            const closeAddBtn = document.getElementById('closeAddBtn');
-            if (closeAddBtn) closeAddBtn.addEventListener('click', () => closeModal(DOM.modalAdd));
             
             DOM.addPlaceForm.addEventListener('submit', handleAddPin);
-            // Image preview logic
-            const fileInput = document.getElementById('placeImage');
-            const previewImg = document.getElementById('placeImagePreview');
-            if (fileInput && previewImg) {
-                fileInput.addEventListener('change', function() {
-                    if (this.files && this.files[0]) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            previewImg.src = e.target.result;
-                            previewImg.style.display = 'block';
-                        };
-                        reader.readAsDataURL(this.files[0]);
-                    } else {
-                        previewImg.src = '';
-                        previewImg.style.display = 'none';
-                    }
-                });
-            }
             
             DOM.searchInput.addEventListener('input', handleMainSearch);
             DOM.locationSearchInput.addEventListener('input', debounce(handleLocationSearch, 300));
@@ -619,27 +494,19 @@ document.addEventListener('DOMContentLoaded', () => {
             DOM.adminModeToggle.addEventListener('change', toggleAdminMode);
         }
 
-        function loadPinsFromFirestore() {
-    db.collection('pins').get().then((querySnapshot) => {
-        allPins = [];
-        querySnapshot.forEach((doc) => {
-            let pin = doc.data();
-            pin.id = doc.id;
-            allPins.push(pin);
-        });
-        renderPins();
-    });
+        function loadPinsFromStorage() {
+            const storedPins = localStorage.getItem('lostSolesPins');
+            allPins = storedPins ? JSON.parse(storedPins) : [];
+        }
 
-
-        
+        function savePinsToStorage() {
+            localStorage.setItem('lostSolesPins', JSON.stringify(allPins));
         }
 
         function renderPins() {
             pinsLayer.clearLayers();
-            // Get active filters
-            const activeTypes = Array.from(document.querySelectorAll('.type-filter:checked')).map(cb => cb.dataset.type);
-            const approvedPins = allPins.filter(pin => pin.approved && activeTypes.includes(pin.type));
-
+            const approvedPins = allPins.filter(pin => pin.approved);
+            
             approvedPins.forEach(pin => {
                 const typeInfo = PIN_TYPES[pin.type];
                 if (!typeInfo) return;
@@ -654,12 +521,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const marker = L.marker([pin.lat, pin.lng], { icon: customIcon });
                 marker.on('click', () => openViewModal(pin));
                 pinsLayer.addLayer(marker);
-            });
-            // Listen for filter changes
-            document.getElementById('legendItems').addEventListener('change', function(e) {
-                if (e.target.classList.contains('type-filter')) {
-                    renderPins();
-                }
             });
         }
         
@@ -676,10 +537,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const addr = data.address;
                     const name = addr.amenity || addr.shop || addr.tourism || data.display_name.split(',')[0];
                     const city = addr.city || addr.town || addr.village || addr.county || '';
-                    const street = addr.road || addr.pedestrian || addr.cycleway || addr.footway || addr.highway || '';
                     DOM.addPlaceForm.name.value = name;
                     DOM.addPlaceForm.city.value = city;
-                    DOM.addPlaceForm.street.value = street;
                 }
             } catch (error) { console.error('Reverse geocoding failed:', error); }
             
@@ -687,49 +546,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         function handleAddPin(e) {
-    e.preventDefault();
-    const formData = new FormData(DOM.addPlaceForm);
-    const fileInput = document.getElementById('placeImage');
-    const file = fileInput && fileInput.files && fileInput.files[0];
-
-    function savePin(imageUrl) {
-        const newPin = {
-            type: formData.get('type'),
-            name: formData.get('name'),
-            city: formData.get('city'),
-            lat: parseFloat(formData.get('lat')),
-            lng: parseFloat(formData.get('lng')),
-            rating: parseInt(formData.get('rating'), 10),
-            comment: formData.get('comment'),
-            approved: false,
-            ratings: [],
-            comments: [],
-            image: imageUrl || null
-        };
-        db.collection('pins').add(newPin)
-          .then(() => {
+            e.preventDefault();
+            const formData = new FormData(DOM.addPlaceForm);
+            const newPin = {
+                id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
+                type: formData.get('type'),
+                name: formData.get('name'),
+                city: formData.get('city'),
+                lat: parseFloat(formData.get('lat')),
+                lng: parseFloat(formData.get('lng')),
+                rating: parseInt(formData.get('rating'), 10), 
+                comment: formData.get('comment'),
+                approved: false,
+                ratings: [],
+                comments: []
+            };
+            
+            allPins.push(newPin);
+            savePinsToStorage();
+            
             alert('Place submitted for approval!');
             closeModal(DOM.modalAdd);
-            loadPinsFromFirestore();
-          })
-          .catch((error) => {
-            alert('Error saving pin: ' + error.message);
-          });
-    }
-
-    if (file) {
-        const storageRef = storage.ref().child('pin-images/' + Date.now() + '-' + file.name);
-        storageRef.put(file).then(snapshot => {
-            return snapshot.ref.getDownloadURL();
-        }).then(downloadURL => {
-            savePin(downloadURL);
-        }).catch(error => {
-            alert('Image upload failed: ' + error.message);
-            savePin(null);
-        });
-    } else {
-        savePin(null);
-    }
+        }
         
         function locateUser() {
             navigator.geolocation.getCurrentPosition(
@@ -817,12 +655,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         const addr = resultData.address;
                         const name = addr.amenity || addr.shop || addr.tourism || resultData.display_name.split(',')[0];
                         const city = addr.city || addr.town || addr.village || addr.county || '';
-                        const street = addr.road || addr.pedestrian || addr.cycleway || addr.footway || addr.highway || '';
+                        
                         DOM.addPlaceForm.name.value = name;
                         DOM.addPlaceForm.city.value = city;
-                        DOM.addPlaceForm.street.value = street;
                         DOM.addPlaceForm.lat.value = parseFloat(resultData.lat).toFixed(6);
                         DOM.addPlaceForm.lng.value = parseFloat(resultData.lon).toFixed(6);
+                        
                         DOM.locationSearchResults.innerHTML = '';
                         DOM.locationSearchInput.value = '';
                     });
@@ -858,13 +696,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let allRatings = [pin.rating].concat((pin.comments||[]).map(r => r.rating).filter(r => typeof r === 'number'));
             let avg = allRatings.length ? (allRatings.reduce((a,b)=>a+b,0)/allRatings.length) : 0;
             document.getElementById('viewPinAvgRating').innerHTML = `<b>Average rating:</b> ${avg.toFixed(2)} / 5 <span style='color:#f39c12'>${'★'.repeat(Math.round(avg))}${'☆'.repeat(5-Math.round(avg))}</span> <small>(${allRatings.length} review${allRatings.length!==1?'s':''})</small>`;
-            // Show image if present
-            const imgContainer = document.getElementById('viewPinImageContainer');
-            if (pin.image) {
-                imgContainer.innerHTML = `<img src="${pin.image}" alt="Place image" style="max-width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);margin-bottom:8px;" />`;
-            } else {
-                imgContainer.innerHTML = '';
-            }
             document.getElementById('viewPinComment').innerHTML = `<b>Original comment:</b><br>${pin.comment || 'No comment provided.'}`;
             // Show all reviews
             let reviewsHtml = '';
@@ -882,40 +713,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 const rating = parseInt(reviewForm.reviewRating.value, 10);
                 const comment = reviewForm.reviewComment.value.trim();
                 if (!rating) return;
-                // Add review to Firestore
-                db.collection('pins').doc(pin.id).get().then(doc => {
-                    if (!doc.exists) return;
-                    const pinData = doc.data();
-                    const comments = Array.isArray(pinData.comments) ? pinData.comments : [];
-                    comments.push({ rating, comment, timestamp: Date.now() });
-                    return db.collection('pins').doc(pin.id).update({ comments });
-                }).then(() => {
-                    loadPinsFromFirestore();
-                    closeModal(DOM.modalView);
-                });
+                if (!pin.comments) pin.comments = [];
+                pin.comments.push({ rating, comment, timestamp: Date.now() });
+                savePinsToStorage();
+                closeModal(DOM.modalView);
             };
             openModal(DOM.modalView);
         }
         
         // NEW: Localized approval/rejection functions with Admin check
-     function approvePin(id) {
-    if (!isAdmin) return;
-    const pin = allPins.find(p => p.id === id);
-    if (pin) {
-        db.collection('pins').doc(id).update({ approved: true }).then(() => {
-            loadPinsFromFirestore();
-            openPendingModal();
-        });
-    }
-}
+        function approvePin(id) {
+            if (!isAdmin) return; // Basic security check
+            const pin = allPins.find(p => p.id === id);
+            if (pin) pin.approved = true;
+            savePinsToStorage();
+            renderPins();
+            // Re-render pending list to reflect the change immediately
+            openPendingModal(); 
+        }
         
-   function rejectPin(id) {
-    if (!isAdmin) return;
-    db.collection('pins').doc(id).delete().then(() => {
-        loadPinsFromFirestore();
-        openPendingModal();
-    });
-}
+        function rejectPin(id) {
+            if (!isAdmin) return; // Basic security check
+            allPins = allPins.filter(p => p.id !== id);
+            savePinsToStorage();
+            // Re-render pending list to reflect the change immediately
+            openPendingModal(); 
+        }
         
         function openPendingModal() {
             if (!isAdmin) return; // Prevent opening if not admin
@@ -961,21 +784,16 @@ document.addEventListener('DOMContentLoaded', () => {
         */
 
         function clearAllData() {
-    if (confirm('Are you sure you want to delete ALL data? This cannot be undone.')) {
-        db.collection('pins').get().then((querySnapshot) => {
-            const batch = db.batch();
-            querySnapshot.forEach((doc) => {
-                batch.delete(doc.ref);
-            });
-            return batch.commit();
-        }).then(() => {
-            allPins = [];
-            renderPins();
-            alert('All data cleared.');
-        });
+            if (confirm('Are you sure you want to delete ALL data? This cannot be undone.')) {
+                localStorage.removeItem('lostSolesPins');
+                allPins = [];
+                renderPins();
+                alert('All data cleared.');
+            }
+        }
+
         init();
-    }
-});
-</script>
+    });
+    </script>
 </body>
 </html>
