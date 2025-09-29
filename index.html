@@ -210,7 +210,7 @@
 
         .pin-icon {
             width: 32px; height: 32px; border-radius: 8px;
-            background: #185b8c;
+            background: #fff;
             display: flex; justify-content: center; align-items: center;
             box-shadow: 0 2px 8px rgba(10,35,66,0.15);
             border: 2px solid #e74c3c;
@@ -404,13 +404,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // App version: 1.6
         const PIN_TYPES = {
-            'cafe':      { label: 'Cafe / Coffee shop',    icon: '⦿', color: '#2196f3' },
-            'coworking': { label: 'Co-working space',      icon: '▣', color: '#64b5f6' },
-            'market':    { label: 'Local Food / Market',   icon: '◼', color: '#b3e0fc' },
-            'sunrise':   { label: 'Sunrise spot',          icon: '▴', color: '#42a5f5' },
-            'sunset':    { label: 'Sunset spot',           icon: '▾', color: '#1565c0' },
-            'water':     { label: 'Free Water refill',     icon: '◯', color: '#00b4d8' },
-            'worldgoby': { label: 'Spots to watch the world go by', icon: '🌍', color: '#43a047' }
+            'cafe':      { label: 'Cafe / Coffee shop',    icon: '☕', color: '#2196f3' }, // coffee mug
+            'coworking': { label: 'Co-working space',      icon: '💻', color: '#64b5f6' }, // laptop
+            'market':    { label: 'Local Food / Market',   icon: '🛒', color: '#b3e0fc' }, // shopping cart
+            'sunrise':   { label: 'Sunrise spot',          icon: '🌅', color: '#42a5f5' }, // sunrise
+            'sunset':    { label: 'Sunset spot',           icon: '🌇', color: '#1565c0' }, // sunset
+            'water':     { label: 'Free Water refill',     icon: '🧴', color: '#00b4d8' }, // water bottle
+            'worldgoby': { label: 'Spots to watch the world go by', icon: '🌍', color: '#43a047' } // globe
         };
 
         let map;
@@ -664,6 +664,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
                     type: formData.get('type'),
                     name: formData.get('name'),
+                    street: formData.get('street'),
                     city: formData.get('city'),
                     lat: parseFloat(formData.get('lat')),
                     lng: parseFloat(formData.get('lng')),
@@ -672,8 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     approved: false,
                     ratings: [],
                     comments: [],
-                    image: imageUrl || null,
-                    street: formData.get('street'),
+                    image: imageUrl || null
                 };
                 allPins.push(newPin);
                 savePinsToStorage();
