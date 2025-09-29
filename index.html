@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LostSoles - Traveler Sourced Awesomeness</title>
+<!-- Firebase App (core) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <!-- Firestore -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <!-- Storage -->
@@ -17,11 +19,9 @@
     storageBucket: "lostsoles.firebasestorage.app",
     messagingSenderId: "54345832025",
     appId: "1:54345832025:web:dbb0f85c868e9f71d44348"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-</script>
+    }
+}
+});
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
