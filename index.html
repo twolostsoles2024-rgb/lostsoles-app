@@ -811,7 +811,47 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        function openModal(modal) { modal.classList.add('active'); }
+        function openModal(modal) {
+            // Remove and re-add all event listeners for modal buttons/forms to prevent stacking
+            if (modal === DOM.modalAdd) {
+                // Cancel button
+                const cancelBtn = document.getElementById('cancelAddBtn');
+                const newCancelBtn = cancelBtn.cloneNode(true);
+                cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+                newCancelBtn.addEventListener('click', () => closeModal(DOM.modalAdd));
+                // Submit form
+                const addForm = document.getElementById('addPlaceForm');
+                const newAddForm = addForm.cloneNode(true);
+                addForm.parentNode.replaceChild(newAddForm, addForm);
+                newAddForm.addEventListener('submit', handleAddPin);
+            }
+            if (modal === DOM.modalView) {
+                // Close button
+                const closeBtns = modal.querySelectorAll('.close-btn');
+                closeBtns.forEach(btn => {
+                    const newBtn = btn.cloneNode(true);
+                    btn.parentNode.replaceChild(newBtn, btn);
+                    newBtn.addEventListener('click', () => closeModal(DOM.modalView));
+                });
+                // Submit review form
+                const reviewForm = document.getElementById('addReviewForm');
+                const newReviewForm = reviewForm.cloneNode(true);
+                reviewForm.parentNode.replaceChild(newReviewForm, reviewForm);
+                newReviewForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const rating = parseInt(newReviewForm.reviewRating.value, 10);
+                    const comment = newReviewForm.reviewComment.value.trim();
+                    if (!rating) return;
+                    const pinId = modal.getAttribute('data-pin-id');
+                    const pin = allPins.find(p => p.id === pinId);
+                    if (!pin.comments) pin.comments = [];
+                    pin.comments.push({ rating, comment, timestamp: Date.now() });
+                    savePinsToStorage();
+                    closeModal(DOM.modalView);
+                });
+            }
+            modal.classList.add('active');
+        }
         function closeModal(modal) {
             DOM.locationSearchResults.innerHTML = '';
             modal.classList.remove('active');
