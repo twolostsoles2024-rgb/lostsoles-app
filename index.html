@@ -654,7 +654,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const formData = new FormData(DOM.addPlaceForm);
             const fileInput = document.getElementById('placeImage');
             const file = fileInput && fileInput.files && fileInput.files[0];
-
             function savePin(imageUrl) {
                 const newPin = {
                     id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
@@ -673,10 +672,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 allPins.push(newPin);
                 savePinsToStorage();
+                closeModal(DOM.modalAdd); // Move this before alert to ensure modal closes instantly
                 alert('Place submitted for approval!');
-                closeModal(DOM.modalAdd);
             }
-
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
