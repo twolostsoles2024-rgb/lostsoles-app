@@ -261,7 +261,7 @@
 
     <aside id="sidePanel">
         <div class="panel-header">
-            <h1>LostSoles <span style="font-size:1.1rem;font-weight:normal;opacity:0.7;margin-left:6px;vertical-align:middle;">v2.0</span></h1>
+            <h1>LostSoles <span style="font-size:1.1rem;font-weight:normal;opacity:0.7;margin-left:6px;vertical-align:middle;">v2.1</span></h1>
             <p>Finding and sharing awesome spots</p>
         </div>
         <div class="search-container">
@@ -458,7 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 8px 4px 8px;">
                                                   <span style="width:44px;height:44px;display:inline-block;"></span>
                                                   <div style="display:flex;flex-direction:column;align-items:flex-end;flex:1;">
-                                                    <span style="font-size:1.3rem;font-weight:bold;letter-spacing:1px;">LostSoles <span style='font-size:0.95rem;font-weight:normal;opacity:0.7;margin-left:4px;'>v2.0</span></span>
+                                                    <span style="font-size:1.3rem;font-weight:bold;letter-spacing:1px;">LostSoles <span style='font-size:0.95rem;font-weight:normal;opacity:0.7;margin-left:4px;'>v2.1</span></span>
                                                     <span style="font-size:0.98rem;font-style:italic;color:#b3e0fc;margin-top:2px;">Finding and sharing awesome spots</span>
                                                   </div>
                                                 </div>
@@ -472,13 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                               </div>
                                             `;
                                             // Sync search and location events
-                                            document.getElementById('mobileSearchInput').addEventListener('input', e => {
-                                                DOM.searchInput.value = e.target.value;
-                                                DOM.searchInput.dispatchEvent(new Event('input'));
-                                            });
-                                            DOM.searchInput.addEventListener('input', e => {
-                                                document.getElementById('mobileSearchInput').value = e.target.value;
-                                            });
+                                            document.getElementById('mobileSearchInput').addEventListener('input', handleMainSearch);
                                             document.getElementById('mobileLocationBtn').addEventListener('click', locateUser);
                                             document.getElementById('mobileAddPlaceBtn').addEventListener('click', () => {
                                                 DOM.addPlaceForm.reset();
@@ -812,7 +806,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         function openModal(modal) {
-            // Remove and re-add all event listeners for modal buttons/forms to prevent stacking
             if (modal === DOM.modalAdd) {
                 // Cancel button
                 const cancelBtn = document.getElementById('cancelAddBtn');
@@ -842,8 +835,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const rating = parseInt(newReviewForm.reviewRating.value, 10);
                     const comment = newReviewForm.reviewComment.value.trim();
                     if (!rating) return;
-                    const pinId = modal.getAttribute('data-pin-id');
-                    const pin = allPins.find(p => p.id === pinId);
+                    // Find pin by name and city (since modalView doesn't have pin id)
+                    const pinName = document.getElementById('viewPinName').textContent;
+                    const pinCity = document.getElementById('viewPinCity').textContent.split(' in ')[1];
+                    const pin = allPins.find(p => p.name === pinName && p.city === pinCity);
                     if (!pin.comments) pin.comments = [];
                     pin.comments.push({ rating, comment, timestamp: Date.now() });
                     savePinsToStorage();
@@ -896,6 +891,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const rating = parseInt(newReviewForm.reviewRating.value, 10);
                 const comment = newReviewForm.reviewComment.value.trim();
                 if (!rating) return;
+                // Find pin by name and city (since modalView doesn't have pin id)
+                const pinName = document.getElementById('viewPinName').textContent;
+                const pinCity = document.getElementById('viewPinCity').textContent.split(' in ')[1];
+                const pin = allPins.find(p => p.name === pinName && p.city === pinCity);
                 if (!pin.comments) pin.comments = [];
                 pin.comments.push({ rating, comment, timestamp: Date.now() });
                 savePinsToStorage();
