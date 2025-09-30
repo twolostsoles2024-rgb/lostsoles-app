@@ -439,7 +439,8 @@ document.addEventListener('DOMContentLoaded', () => {
             searchResults: document.getElementById('searchResults'),
             legendItems: document.getElementById('legendItems'),
             // NEW: Admin Toggle Element
-            adminModeToggle: document.getElementById('adminModeToggle')
+            adminModeToggle: document.getElementById('adminModeToggle'),
+            mobileSearchResults: document.getElementById('mobileSearchResults')
         };
         
         function init() {
@@ -462,8 +463,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     <span style="font-size:0.98rem;font-style:italic;color:#b3e0fc;margin-top:2px;">Finding and sharing awesome spots</span>
                                                   </div>
                                                 </div>
-                                                <div style="display:flex;align-items:center;gap:8px;padding:8px 8px 10px 8px;">
+                                                <div style="display:flex;align-items:center;gap:8px;padding:8px 8px 10px 8px;position:relative;">
                                                   <input type="text" id="mobileSearchInput" placeholder="Where are you going today?" style="flex:1;padding:8px 10px;border-radius:8px;border:none;font-size:1rem;background:#23395d;color:#fff;outline:none;">
+                                                  <ul id="mobileSearchResults" style="position:absolute;top:48px;left:0;width:100%;background:#fff;color:#222;z-index:4002;list-style:none;margin:0;padding:0;box-shadow:0 2px 8px rgba(10,35,66,0.12);display:none;"></ul>
                                                   <button id="mobileLocationBtn" class="btn" style="width:38px;height:38px;min-width:38px;min-height:38px;padding:0;background:#185b8c;border:2px solid #2196f3;border-radius:8px;display:flex;align-items:center;justify-content:center;" title="Zoom to my location">
                                                           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2196f3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8" stroke="#2196f3" stroke-width="2.2" fill="#fff"/><circle cx="12" cy="12" r="3" fill="#2196f3"/><line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" /></svg>
                                                   </button>
@@ -731,34 +733,60 @@ document.addEventListener('DOMContentLoaded', () => {
                     return `<li data-lat="${result.lat}" data-lon="${result.lon}" data-type="nominatim">${name}${city ? ', ' + city : ''} <span style='color:#00b4d8'>(map search)</span></li>`;
                 }).join('');
             }
-            DOM.searchResults.innerHTML = html;
-            // Patch: Sync search results to mobile searchResults if present
-            const mobileResults = document.querySelector('#mobileHeader #searchResults');
-            if (mobileResults) mobileResults.innerHTML = html;
-
-            // 4. Click handlers
-            document.querySelectorAll('#searchResults li').forEach(item => {
-                if (item.dataset.type === 'pin') {
-                    item.addEventListener('click', () => {
-                        const pin = allPins.find(p => p.id == item.dataset.id);
-                        if(pin) {
-                            map.setView([pin.lat, pin.lng], map.getMaxZoom ? map.getMaxZoom() : 19);
+            const mobileInput = document.getElementById('mobileSearchInput');
+            const mobileResults = document.getElementById('mobileSearchResults');
+            if (mobileInput && document.activeElement === mobileInput) {
+                mobileResults.innerHTML = html;
+                mobileResults.style.display = html ? 'block' : 'none';
+                // Attach click handlers for mobile results
+                mobileResults.querySelectorAll('li').forEach(item => {
+                    if (item.dataset.type === 'pin') {
+                        item.addEventListener('click', () => {
+                            const pin = allPins.find(p => p.id == item.dataset.id);
+                            if(pin) {
+                                map.setView([pin.lat, pin.lng], map.getMaxZoom ? map.getMaxZoom() : 19);
+                                mobileInput.value = '';
+                                mobileResults.innerHTML = '';
+                                mobileResults.style.display = 'none';
+                            }
+                        });
+                    } else if (item.dataset.type === 'nominatim') {
+                        item.addEventListener('click', () => {
+                            const lat = parseFloat(item.dataset.lat);
+                            const lon = parseFloat(item.dataset.lon);
+                            map.setView([lat, lon], map.getMaxZoom ? map.getMaxZoom() : 19);
+                            mobileInput.value = '';
+                            mobileResults.innerHTML = '';
+                            mobileResults.style.display = 'none';
+                        });
+                    }
+                });
+            } else {
+                DOM.searchResults.innerHTML = html;
+                // Attach click handlers for sidebar results
+                document.querySelectorAll('#searchResults li').forEach(item => {
+                    if (item.dataset.type === 'pin') {
+                        item.addEventListener('click', () => {
+                            const pin = allPins.find(p => p.id == item.dataset.id);
+                            if(pin) {
+                                map.setView([pin.lat, pin.lng], map.getMaxZoom ? map.getMaxZoom() : 19);
+                                DOM.searchInput.value = '';
+                                DOM.searchResults.innerHTML = '';
+                                if (DOM.sidePanel.classList.contains('active')) { DOM.sidePanel.classList.remove('active'); }
+                            }
+                        });
+                    } else if (item.dataset.type === 'nominatim') {
+                        item.addEventListener('click', () => {
+                            const lat = parseFloat(item.dataset.lat);
+                            const lon = parseFloat(item.dataset.lon);
+                            map.setView([lat, lon], map.getMaxZoom ? map.getMaxZoom() : 19);
                             DOM.searchInput.value = '';
                             DOM.searchResults.innerHTML = '';
                             if (DOM.sidePanel.classList.contains('active')) { DOM.sidePanel.classList.remove('active'); }
-                        }
-                    });
-                } else if (item.dataset.type === 'nominatim') {
-                    item.addEventListener('click', () => {
-                        const lat = parseFloat(item.dataset.lat);
-                        const lon = parseFloat(item.dataset.lon);
-                        map.setView([lat, lon], map.getMaxZoom ? map.getMaxZoom() : 19);
-                        DOM.searchInput.value = '';
-                        DOM.searchResults.innerHTML = '';
-                        if (DOM.sidePanel.classList.contains('active')) { DOM.sidePanel.classList.remove('active'); }
-                    });
-                }
-            });
+                        });
+                    }
+                });
+            }
         }
         
         async function handleLocationSearch(e) {
@@ -809,33 +837,24 @@ document.addEventListener('DOMContentLoaded', () => {
             if (modal === DOM.modalAdd) {
                 // Cancel button
                 const cancelBtn = document.getElementById('cancelAddBtn');
-                const newCancelBtn = cancelBtn.cloneNode(true);
-                cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-                newCancelBtn.addEventListener('click', () => closeModal(DOM.modalAdd));
+                cancelBtn.onclick = () => closeModal(DOM.modalAdd);
                 // Submit form
                 const addForm = document.getElementById('addPlaceForm');
-                const newAddForm = addForm.cloneNode(true);
-                addForm.parentNode.replaceChild(newAddForm, addForm);
-                newAddForm.addEventListener('submit', handleAddPin);
+                addForm.onsubmit = handleAddPin;
             }
             if (modal === DOM.modalView) {
-                // Close button
-                const closeBtns = modal.querySelectorAll('.close-btn');
-                closeBtns.forEach(btn => {
-                    const newBtn = btn.cloneNode(true);
-                    btn.parentNode.replaceChild(newBtn, btn);
-                    newBtn.addEventListener('click', () => closeModal(DOM.modalView));
+                // Close button(s)
+                modal.querySelectorAll('.close-btn').forEach(btn => {
+                    btn.onclick = () => closeModal(DOM.modalView);
                 });
                 // Submit review form
                 const reviewForm = document.getElementById('addReviewForm');
-                const newReviewForm = reviewForm.cloneNode(true);
-                reviewForm.parentNode.replaceChild(newReviewForm, reviewForm);
-                newReviewForm.addEventListener('submit', function(e) {
+                reviewForm.onsubmit = function(e) {
                     e.preventDefault();
-                    const rating = parseInt(newReviewForm.reviewRating.value, 10);
-                    const comment = newReviewForm.reviewComment.value.trim();
+                    const rating = parseInt(reviewForm.reviewRating.value, 10);
+                    const comment = reviewForm.reviewComment.value.trim();
                     if (!rating) return;
-                    // Find pin by name and city (since modalView doesn't have pin id)
+                    // Find pin by name and city
                     const pinName = document.getElementById('viewPinName').textContent;
                     const pinCity = document.getElementById('viewPinCity').textContent.split(' in ')[1];
                     const pin = allPins.find(p => p.name === pinName && p.city === pinCity);
@@ -843,7 +862,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     pin.comments.push({ rating, comment, timestamp: Date.now() });
                     savePinsToStorage();
                     closeModal(DOM.modalView);
-                });
+                };
             }
             modal.classList.add('active');
         }
