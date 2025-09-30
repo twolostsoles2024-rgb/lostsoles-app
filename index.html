@@ -262,7 +262,7 @@
     <aside id="sidePanel">
         <div class="panel-header">
             <h1>LostSoles <span style="font-size:1.1rem;font-weight:normal;opacity:0.7;margin-left:6px;vertical-align:middle;">v2.1</span></h1>
-            <p>Sharing Only The Best Places</p>
+            <p>Crowd-Sourcing Only The Best Places</p>
         </div>
         <div class="search-container">
             <div style="display:flex;gap:8px;align-items:center;">
@@ -460,7 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                   <span style="width:44px;height:44px;display:inline-block;"></span>
                                                   <div style="display:flex;flex-direction:column;align-items:flex-end;flex:1;">
                                                     <span style="font-size:1.3rem;font-weight:bold;letter-spacing:1px;">LostSoles <span style='font-size:0.95rem;font-weight:normal;opacity:0.7;margin-left:4px;'>v2.1</span></span>
-                                                    <span style="font-size:0.98rem;font-style:italic;color:#b3e0fc;margin-top:2px;">Sharing Only The Best Places</span>
+                                                    <span style="font-size:0.98rem;font-style:italic;color:#b3e0fc;margin-top:2px;">Crowd-Sourcing Only The Best Places</span>
                                                   </div>
                                                 </div>
                                                 <div style="display:flex;align-items:center;gap:8px;padding:8px 8px 10px 8px;position:relative;">
@@ -860,6 +860,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     pin.comments.push({ rating, comment, timestamp: Date.now() });
                     savePinsToStorage();
                     closeModal(DOM.modalView);
+                };
+            }
+            if (modal === DOM.modalPending) {
+                // Close button(s)
+                modal.querySelectorAll('.close-btn').forEach(btn => {
+                    btn.onclick = () => closeModal(DOM.modalPending);
+                });
+                // Approve/Reject buttons (event delegation)
+                const pendingList = document.getElementById('pendingList');
+                pendingList.onclick = function(e) {
+                    const li = e.target.closest('li[data-id]');
+                    if (!li) return;
+                    const id = li.getAttribute('data-id');
+                    if (e.target.classList.contains('approve-pin-btn')) {
+                        approvePin(id);
+                    } else if (e.target.classList.contains('reject-pin-btn')) {
+                        rejectPin(id);
+                    }
                 };
             }
             modal.classList.add('active');
